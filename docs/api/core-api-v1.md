@@ -2,6 +2,8 @@
 
 API version: `core-api-v1`
 
+IPC protocol version: `speed-on-ipc-v1`
+
 This document defines the stable contract between native frontends and the Rust backend core. It is transport-agnostic: Windows, macOS, and Linux frontends may call it through IPC, local HTTP, FFI, or another adapter later, but the request and response payloads must keep this shape.
 
 ## Unified response envelope
@@ -36,6 +38,58 @@ Every frontend-facing API returns the same envelope.
 ```
 
 The frontend error response intentionally does not expose internal `cause` values. Causes may contain database paths, platform details, or other implementation-specific information. Sanitized diagnostics should go to system logs instead.
+
+## JSON IPC envelope
+
+The minimal IPC adapter wraps Core API payloads in a stable JSON envelope. The envelope is independent from the future transport choice: named pipe, Unix domain socket, local HTTP, stdio, or FFI adapter can all carry the same JSON shape.
+
+### IPC request
+
+```json
+{
+  "protocol_version": "speed-on-ipc-v1",
+  "request_id": "request-1",
+  "command": "search",
+  "payload": {
+    "query": "term",
+    "limit": 5,
+    "kinds": ["application"],
+    "now_millis": 100
+  }
+}
+```
+
+Fields:
+
+- `protocol_version`: must be `speed-on-ipc-v1`.
+- `request_id`: frontend-generated request id. Must not be empty.
+- `command`: one of `search`, `recommend`, `record_selection`.
+- `payload`: command-specific Core API request payload.
+
+### IPC response
+
+```json
+{
+  "protocol_version": "speed-on-ipc-v1",
+  "request_id": "request-1",
+  "command": "search",
+  "response": {
+    "ok": true,
+    "data": {
+      "api_version": "core-api-v1",
+      "results": []
+    },
+    "error": null
+  }
+}
+```
+
+Important behavior:
+
+- `request_id` is copied from request to response.
+- Unsupported `protocol_version` returns a structured error.
+- Invalid payload returns a structured error.
+- IPC dispatcher must not panic on malformed payloads.
 
 ## Common resource DTO
 
