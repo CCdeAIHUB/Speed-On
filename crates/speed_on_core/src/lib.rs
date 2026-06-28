@@ -6,7 +6,9 @@
 
 pub mod domain;
 pub mod error;
+pub mod logging;
 pub mod ports;
+pub mod search;
 pub mod service;
 pub mod storage;
 
@@ -15,7 +17,13 @@ pub use domain::{
     ResourceKind,
 };
 pub use error::{AppError, AppResult};
+pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 pub use ports::{
     BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceRepository,
+    SearchIndexRepository, SystemLogSink, UserOperationLogRepository,
+};
+pub use search::{
+    normalize_search_query, SearchAlias, SearchAliasKind, SearchCandidate, SearchMatchKind,
+    SearchRequest, SearchResult, SearchService, UserSelectionSignal,
 };
 pub use service::{IndexService, RecommendationService};
