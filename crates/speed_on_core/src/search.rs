@@ -28,6 +28,25 @@ impl SearchAliasKind {
     }
 }
 
+impl TryFrom<&str> for SearchAliasKind {
+    type Error = AppError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "title" => Ok(Self::Title),
+            "target" => Ok(Self::Target),
+            "browser_title" => Ok(Self::BrowserTitle),
+            "pinyin_full" => Ok(Self::PinyinFull),
+            "pinyin_initials" => Ok(Self::PinyinInitials),
+            "custom" => Ok(Self::Custom),
+            _ => Err(AppError::invalid_argument(
+                format!("unknown search alias kind: {value}"),
+                "search::SearchAliasKind",
+            )),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchAlias {
     pub kind: SearchAliasKind,
