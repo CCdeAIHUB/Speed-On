@@ -19,7 +19,8 @@ pub struct SqliteStore {
 
 impl SqliteStore {
     pub fn open(path: impl AsRef<Path>) -> AppResult<Self> {
-        let connection = Connection::open(path).map_err(|error| sqlite_error(error, "storage::SqliteStore"))?;
+        let connection =
+            Connection::open(path).map_err(|error| sqlite_error(error, "storage::SqliteStore"))?;
         Ok(Self { connection })
     }
 
@@ -76,7 +77,8 @@ impl SqliteStore {
         let tx = self.connection.transaction().map_err(|error| {
             sqlite_error(error, "storage::SqliteStore::upsert_search_aliases")
         })?;
-        let created_at = u64_to_i64(created_at_millis, "storage::SqliteStore::upsert_search_aliases")?;
+        let created_at =
+            u64_to_i64(created_at_millis, "storage::SqliteStore::upsert_search_aliases")?;
 
         for alias in aliases {
             let normalized_alias = normalize_search_query(&alias.value);
@@ -97,11 +99,11 @@ impl SqliteStore {
                     alias_text = excluded.alias_text
                 "#,
                 params![
-                    alias_id,
+                    alias_id.as_str(),
                     resource_id,
                     alias.kind.as_str(),
-                    alias.value,
-                    normalized_alias,
+                    alias.value.as_str(),
+                    normalized_alias.as_str(),
                     created_at,
                 ],
             )
@@ -149,9 +151,9 @@ impl SqliteStore {
             .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_selection_signal"))?
         {
             Some(row) => Ok(Some(UserSelectionSignal {
-                normalized_query: row
-                    .get(0)
-                    .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_selection_signal"))?,
+                normalized_query: row.get(0).map_err(|error| {
+                    sqlite_error(error, "storage::SqliteStore::load_selection_signal")
+                })?,
                 selection_count: i64_to_u64(
                     row.get(1).map_err(|error| {
                         sqlite_error(error, "storage::SqliteStore::load_selection_signal")
@@ -225,11 +227,9 @@ impl SqliteStore {
 
         let mut resources = Vec::new();
         for row in rows {
-            resources.push(
-                row.map_err(|error| {
-                    sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows")
-                })?,
-            );
+            resources.push(row.map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows")
+            })?);
         }
 
         Ok(resources)
@@ -336,12 +336,12 @@ impl ResourceRepository for SqliteStore {
                     updated_at_millis = excluded.updated_at_millis
                 "#,
                 params![
-                    resource.id,
+                    resource.id.as_str(),
                     resource.kind.as_str(),
-                    resource.title,
-                    resource.target,
-                    resource.icon_path,
-                    resource.source,
+                    resource.title.as_str(),
+                    resource.target.as_str(),
+                    resource.icon_path.as_deref(),
+                    resource.source.as_str(),
                     u64_to_i64(resource.first_seen_at_millis, "storage::SqliteStore::upsert_resources")?,
                     u64_to_i64(resource.last_seen_at_millis, "storage::SqliteStore::upsert_resources")?,
                 ],
@@ -357,7 +357,8 @@ impl ResourceRepository for SqliteStore {
         let tx = self.connection.transaction().map_err(|error| {
             sqlite_error(error, "storage::SqliteStore::record_activity")
         })?;
-        let opened_at = u64_to_i64(activity.opened_at_millis, "storage::SqliteStore::record_activity")?;
+        let opened_at =
+            u64_to_i64(activity.opened_at_millis, "storage::SqliteStore::record_activity")?;
 
         tx.execute(
             r#"
@@ -366,12 +367,12 @@ impl ResourceRepository for SqliteStore {
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?5)
             "#,
             params![
-                activity.id,
+                activity.id.as_str(),
                 activity.resource_id.as_deref(),
                 activity.kind.as_str(),
-                activity.target,
+                activity.target.as_str(),
                 opened_at,
-                activity.source,
+                activity.source.as_str(),
             ],
         )
         .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_activity"))?;
@@ -464,9 +465,9 @@ impl UserOperationLogRepository for SqliteStore {
                 ) VALUES (?1, ?2, ?3, ?4, ?5)
                 "#,
                 params![
-                    entry.id,
-                    entry.raw_query,
-                    entry.normalized_query,
+                    entry.id.as_str(),
+                    entry.raw_query.as_str(),
+                    entry.normalized_query.as_str(),
                     usize_to_i64(entry.result_count, "storage::SqliteStore::record_user_search")?,
                     u64_to_i64(entry.searched_at_millis, "storage::SqliteStore::record_user_search")?,
                 ],
@@ -492,13 +493,13 @@ impl UserOperationLogRepository for SqliteStore {
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
             "#,
             params![
-                entry.id,
-                entry.raw_query,
-                entry.normalized_query,
-                entry.selected_resource_id,
+                entry.id.as_str(),
+                entry.raw_query.as_str(),
+                entry.normalized_query.as_str(),
+                entry.selected_resource_id.as_str(),
                 entry.selected_kind.as_str(),
-                entry.selected_title,
-                entry.selected_target,
+                entry.selected_title.as_str(),
+                entry.selected_target.as_str(),
                 usize_to_i64(entry.selected_rank, "storage::SqliteStore::record_user_selection")?,
                 opened_at,
             ],
@@ -515,7 +516,11 @@ impl UserOperationLogRepository for SqliteStore {
                 last_selected_at_millis = excluded.last_selected_at_millis,
                 updated_at_millis = excluded.updated_at_millis
             "#,
-            params![entry.normalized_query, entry.selected_resource_id, opened_at],
+            params![
+                entry.normalized_query.as_str(),
+                entry.selected_resource_id.as_str(),
+                opened_at,
+            ],
         )
         .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_user_selection"))?;
 
@@ -534,12 +539,12 @@ impl SystemLogSink for SqliteStore {
                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
                 "#,
                 params![
-                    entry.id,
+                    entry.id.as_str(),
                     entry.level.as_str(),
-                    entry.module,
-                    entry.message,
-                    entry.context_summary,
-                    entry.trace_id,
+                    entry.module.as_str(),
+                    entry.message.as_str(),
+                    entry.context_summary.as_deref(),
+                    entry.trace_id.as_deref(),
                     u64_to_i64(entry.occurred_at_millis, "storage::SqliteStore::record_system_log")?,
                 ],
             )
@@ -612,15 +617,13 @@ fn sqlite_error(error: rusqlite::Error, module: &str) -> AppError {
 }
 
 fn u64_to_i64(value: u64, module: &str) -> AppResult<i64> {
-    i64::try_from(value).map_err(|_| {
-        AppError::invalid_argument("value is too large for sqlite integer", module)
-    })
+    i64::try_from(value)
+        .map_err(|_| AppError::invalid_argument("value is too large for sqlite integer", module))
 }
 
 fn usize_to_i64(value: usize, module: &str) -> AppResult<i64> {
-    i64::try_from(value).map_err(|_| {
-        AppError::invalid_argument("value is too large for sqlite integer", module)
-    })
+    i64::try_from(value)
+        .map_err(|_| AppError::invalid_argument("value is too large for sqlite integer", module))
 }
 
 fn i64_to_u64(value: i64, module: &str) -> AppResult<u64> {
