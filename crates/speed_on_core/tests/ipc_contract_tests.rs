@@ -1,8 +1,8 @@
 use serde_json::{json, Value};
 use speed_on_core::{
-    ApiResource, ApiResourceKind, CoreApi, IndexedResource, IpcCommand, IpcRequest,
-    JsonIpcDispatcher, ResourceKind, ResourceRepository, SearchAlias, SearchAliasKind,
-    SqliteStore, IPC_PROTOCOL_VERSION,
+    ApiErrorResponse, ApiResource, ApiResourceKind, CoreApi, IndexedResource, IpcCommand,
+    IpcRequest, JsonIpcDispatcher, ResourceKind, ResourceRepository, SearchAlias,
+    SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -22,12 +22,19 @@ fn ok<T>(result: speed_on_core::AppResult<T>) -> T {
     }
 }
 
+fn some<T>(value: Option<T>) -> T {
+    match value {
+        Some(value) => value,
+        None => panic!("expected Some value"),
+    }
+}
+
 fn resource() -> IndexedResource {
     IndexedResource {
         id: "app-terminal".to_owned(),
         kind: ResourceKind::Application,
         title: "Terminal".to_owned(),
-        target: "/System/Applications/Utilities/Terminal.app".to_owned(),
+        target: "/apps/terminal".to_owned(),
         icon_path: Some("terminal.png".to_owned()),
         source: "test".to_owned(),
         first_seen_at_millis: 1,
@@ -43,7 +50,7 @@ fn dispatcher_with_terminal() -> JsonIpcDispatcher<SqliteStore> {
         "app-terminal",
         &[
             SearchAlias::new(SearchAliasKind::Title, "Terminal"),
-            SearchAlias::new(SearchAliasKind::Target, "/System/Applications/Utilities/Terminal.app"),
+            SearchAlias::new(SearchAliasKind::Target, "/apps/terminal"),
         ],
         10,
     ));
@@ -101,8 +108,9 @@ fn ipc_dispatcher_executes_search_command() {
     assert_eq!(response.request_id, "request-search");
     assert_eq!(response.protocol_version, IPC_PROTOCOL_VERSION);
     assert!(response.response.ok);
-    assert_eq!(response.response.data["api_version"], json!("core-api-v1"));
-    assert_eq!(response.response.data["results"][0]["resource"]["id"], json!("app-terminal"));
+    let data = some(response.response.data);
+    assert_eq!(data["api_version"], json!("core-api-v1"));
+    assert_eq!(data["results"][0]["resource"]["id"], json!("app-terminal"));
 }
 
 #[test]
@@ -122,7 +130,8 @@ fn ipc_dispatcher_executes_recommend_command() {
 
     assert_eq!(response.request_id, "request-recommend");
     assert!(response.response.ok);
-    assert_eq!(response.response.data["api_version"], json!("core-api-v1"));
+    let data = some(response.response.data);
+    assert_eq!(data["api_version"], json!("core-api-v1"));
 }
 
 #[test]
@@ -143,7 +152,8 @@ fn ipc_dispatcher_executes_record_selection_command() {
 
     assert_eq!(response.request_id, "request-selection");
     assert!(response.response.ok);
-    assert_eq!(response.response.data["recorded"], json!(true));
+    let data = some(response.response.data);
+    assert_eq!(data["recorded"], json!(true));
 }
 
 #[test]
@@ -163,8 +173,9 @@ fn ipc_dispatcher_rejects_unsupported_protocol_version() {
     });
 
     assert!(!response.response.ok);
-    assert_eq!(response.response.error["error_code"], json!("CORE_INVALID_ARGUMENT"));
-    assert_eq!(response.response.error["module"], json!("ipc::JsonIpcDispatcher"));
+    let error: ApiErrorResponse = some(response.response.error);
+    assert_eq!(error.error_code, "CORE_INVALID_ARGUMENT");
+    assert_eq!(error.module, "ipc::JsonIpcDispatcher");
 }
 
 #[test]
@@ -182,8 +193,9 @@ fn ipc_dispatcher_rejects_invalid_payload_without_panic() {
     });
 
     assert!(!response.response.ok);
-    assert_eq!(response.response.error["error_code"], json!("CORE_INVALID_ARGUMENT"));
-    assert_eq!(response.response.error["module"], json!("ipc::JsonIpcDispatcher::search"));
+    let error: ApiErrorResponse = some(response.response.error);
+    assert_eq!(error.error_code, "CORE_INVALID_ARGUMENT");
+    assert_eq!(error.module, "ipc::JsonIpcDispatcher::search");
 }
 
 #[test]
@@ -193,7 +205,7 @@ fn ipc_resource_kind_stays_snake_case_inside_payload() {
         id: "url-rust".to_owned(),
         kind: ApiResourceKind::BrowserUrl,
         title: "Rust".to_owned(),
-        target: "https://www.rust-lang.org".to_owned(),
+        target: "browser://rust".to_owned(),
         icon_path: None,
     };
 
