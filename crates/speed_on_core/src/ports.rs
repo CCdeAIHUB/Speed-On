@@ -1,5 +1,7 @@
 use crate::domain::{ActivityRecord, CandidateResource, IndexedResource, ResourceKind};
 use crate::error::AppResult;
+use crate::logging::{SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
+use crate::search::SearchCandidate;
 
 /// Scans installed applications from the current desktop operating system.
 ///
@@ -41,4 +43,35 @@ pub trait ResourceRepository {
         &self,
         kinds: Option<&[ResourceKind]>,
     ) -> AppResult<Vec<CandidateResource>>;
+}
+
+/// Query boundary for frontend search.
+///
+/// Implementations should load normalized aliases, browser title metadata, pinyin
+/// aliases, usage counters, and user-selection signals from SQLite. The search
+/// service consumes this prebuilt view and does not know how SQLite stores it.
+pub trait SearchIndexRepository {
+    fn load_search_candidates(&self, kinds: Option<&[ResourceKind]>) -> AppResult<Vec<SearchCandidate>>;
+}
+
+/// User operation log boundary.
+///
+/// User queries and final selections are intentionally separated from system
+/// logs. They are product-behavior data and may contain sensitive user intent,
+/// file paths, URLs, or document names, so storage implementations must apply
+/// the user's privacy settings before persistence or export.
+pub trait UserOperationLogRepository {
+    fn record_user_search(&mut self, entry: &UserSearchLogEntry) -> AppResult<()>;
+
+    fn record_user_selection(&mut self, entry: &UserSelectionLogEntry) -> AppResult<()>;
+}
+
+/// System runtime log boundary.
+///
+/// System logs should describe modules, stages, errors, timings, and sanitized
+/// context summaries. They must not copy raw search queries, passwords, tokens,
+/// private file contents, or full browser URLs unless a future privacy policy
+/// explicitly allows it.
+pub trait SystemLogSink {
+    fn record_system_log(&mut self, entry: &SystemLogEntry) -> AppResult<()>;
 }
