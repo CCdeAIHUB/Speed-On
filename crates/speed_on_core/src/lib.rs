@@ -4,6 +4,7 @@
 //! macOS, Linux, SQLite, and frontend bindings must be implemented behind the
 //! ports defined here so that business rules stay testable and portable.
 
+pub mod api;
 pub mod domain;
 pub mod error;
 pub mod logging;
@@ -12,6 +13,12 @@ pub mod search;
 pub mod service;
 pub mod storage;
 
+pub use api::{
+    ApiErrorResponse, ApiRecommendationRequest, ApiRecommendationResponse,
+    ApiRecommendationResult, ApiRecordSelectionRequest, ApiRecordSelectionResponse, ApiResource,
+    ApiResourceKind, ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResponse,
+    ApiSearchResult, CoreApi, CORE_API_VERSION,
+};
 pub use domain::{
     ActivityRecord, CandidateResource, IndexedResource, Recommendation, RecommendationRequest,
     ResourceKind,
