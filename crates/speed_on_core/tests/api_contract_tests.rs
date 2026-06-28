@@ -23,6 +23,13 @@ fn ok<T>(result: speed_on_core::AppResult<T>) -> T {
     }
 }
 
+fn some<T>(value: Option<T>) -> T {
+    match value {
+        Some(value) => value,
+        None => panic!("expected Some value"),
+    }
+}
+
 fn resource() -> IndexedResource {
     IndexedResource {
         id: "app-terminal".to_owned(),
@@ -192,10 +199,7 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
         now_millis: 100,
     });
     assert!(search_response.ok);
-    let search_data = match search_response.data {
-        Some(data) => data,
-        None => panic!("expected search data"),
-    };
+    let search_data = some(search_response.data);
     assert_eq!(search_data.results.len(), 1);
     assert_eq!(search_data.results[0].resource.id, "app-terminal");
 
@@ -213,5 +217,5 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
         opened_at_millis: 200,
     });
     assert!(selection_response.ok);
-    assert_eq!(selection_response.data.expect("selection data").recorded, true);
+    assert!(some(selection_response.data).recorded);
 }
