@@ -27,3 +27,4 @@ pub use search::{
     SearchRequest, SearchResult, SearchService, UserSelectionSignal,
 };
 pub use service::{IndexService, RecommendationService};
+pub use storage::SqliteStore;
