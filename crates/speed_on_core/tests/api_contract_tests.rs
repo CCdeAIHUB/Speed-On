@@ -2,7 +2,8 @@ use serde_json::{json, Value};
 use speed_on_core::{
     ApiRecommendationRequest, ApiRecommendationResult, ApiRecordSelectionRequest, ApiResource,
     ApiResourceKind, ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResult,
-    AppError, IndexedResource, Recommendation, ResourceKind, SearchMatchKind, SearchResult,
+    AppError, CoreApi, IndexedResource, Recommendation, ResourceKind, ResourceRepository,
+    SearchAlias, SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -12,6 +13,13 @@ where
     match serde_json::to_value(value) {
         Ok(value) => value,
         Err(error) => panic!("serialization failed unexpectedly: {error}"),
+    }
+}
+
+fn ok<T>(result: speed_on_core::AppResult<T>) -> T {
+    match result {
+        Ok(value) => value,
+        Err(error) => panic!("operation failed unexpectedly: {error}"),
     }
 }
 
@@ -159,4 +167,51 @@ fn record_selection_request_contract_contains_query_resource_rank_and_time() {
     assert_eq!(serialized["selected_resource"]["id"], json!("app-terminal"));
     assert_eq!(serialized["selected_rank"], json!(1));
     assert_eq!(serialized["opened_at_millis"], json!(200));
+}
+
+#[test]
+fn core_api_facade_executes_search_recommend_and_record_selection() {
+    // 场景：前端最终会调用 CoreApi facade，因此契约测试必须验证 facade 能组合 SQLite、搜索和推荐服务。
+    let mut store = ok(SqliteStore::open_in_memory_migrated());
+    let indexed_resource = resource();
+    ok(store.upsert_resources(&[indexed_resource.clone()]));
+    ok(store.upsert_search_aliases(
+        "app-terminal",
+        &[
+            SearchAlias::new(SearchAliasKind::Title, "Terminal"),
+            SearchAlias::new(SearchAliasKind::Target, "/System/Applications/Utilities/Terminal.app"),
+        ],
+        10,
+    ));
+
+    let mut api = CoreApi::new(store);
+    let search_response = api.search(ApiSearchRequest {
+        query: "term".to_owned(),
+        limit: 5,
+        kinds: Some(vec![ApiResourceKind::Application]),
+        now_millis: 100,
+    });
+    assert!(search_response.ok);
+    let search_data = match search_response.data {
+        Some(data) => data,
+        None => panic!("expected search data"),
+    };
+    assert_eq!(search_data.results.len(), 1);
+    assert_eq!(search_data.results[0].resource.id, "app-terminal");
+
+    let recommend_response = api.recommend(ApiRecommendationRequest {
+        limit: 5,
+        kinds: Some(vec![ApiResourceKind::Application]),
+        now_millis: 100,
+    });
+    assert!(recommend_response.ok);
+
+    let selection_response = api.record_selection(ApiRecordSelectionRequest {
+        query: "term".to_owned(),
+        selected_resource: ApiResource::from(indexed_resource),
+        selected_rank: 1,
+        opened_at_millis: 200,
+    });
+    assert!(selection_response.ok);
+    assert_eq!(selection_response.data.expect("selection data").recorded, true);
 }
