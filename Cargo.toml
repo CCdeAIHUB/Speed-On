@@ -1,5 +1,8 @@
 [workspace]
-members = ["crates/speed_on_core"]
+members = [
+    "crates/speed_on_core",
+    "crates/speed_on_ipc_stdio",
+]
 resolver = "2"
 
 [workspace.package]
