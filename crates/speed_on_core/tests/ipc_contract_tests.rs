@@ -1,0 +1,201 @@
+use serde_json::{json, Value};
+use speed_on_core::{
+    ApiResource, ApiResourceKind, CoreApi, IndexedResource, IpcCommand, IpcRequest,
+    JsonIpcDispatcher, ResourceKind, ResourceRepository, SearchAlias, SearchAliasKind,
+    SqliteStore, IPC_PROTOCOL_VERSION,
+};
+
+fn to_json<T>(value: &T) -> Value
+where
+    T: serde::Serialize,
+{
+    match serde_json::to_value(value) {
+        Ok(value) => value,
+        Err(error) => panic!("serialization failed unexpectedly: {error}"),
+    }
+}
+
+fn ok<T>(result: speed_on_core::AppResult<T>) -> T {
+    match result {
+        Ok(value) => value,
+        Err(error) => panic!("operation failed unexpectedly: {error}"),
+    }
+}
+
+fn resource() -> IndexedResource {
+    IndexedResource {
+        id: "app-terminal".to_owned(),
+        kind: ResourceKind::Application,
+        title: "Terminal".to_owned(),
+        target: "/System/Applications/Utilities/Terminal.app".to_owned(),
+        icon_path: Some("terminal.png".to_owned()),
+        source: "test".to_owned(),
+        first_seen_at_millis: 1,
+        last_seen_at_millis: 2,
+    }
+}
+
+fn dispatcher_with_terminal() -> JsonIpcDispatcher<SqliteStore> {
+    let mut store = ok(SqliteStore::open_in_memory_migrated());
+    let indexed_resource = resource();
+    ok(store.upsert_resources(&[indexed_resource]));
+    ok(store.upsert_search_aliases(
+        "app-terminal",
+        &[
+            SearchAlias::new(SearchAliasKind::Title, "Terminal"),
+            SearchAlias::new(SearchAliasKind::Target, "/System/Applications/Utilities/Terminal.app"),
+        ],
+        10,
+    ));
+
+    JsonIpcDispatcher::new(CoreApi::new(store))
+}
+
+#[test]
+fn ipc_request_contract_uses_stable_json_envelope() {
+    // 场景：真实 pipe/socket/http 传输层之前，IPC 请求 envelope 必须先稳定下来。
+    let request = IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-1".to_owned(),
+        command: IpcCommand::Search,
+        payload: json!({
+            "query": "term",
+            "limit": 5,
+            "kinds": ["application"],
+            "now_millis": 100
+        }),
+    };
+
+    assert_eq!(
+        to_json(&request),
+        json!({
+            "protocol_version": "speed-on-ipc-v1",
+            "request_id": "request-1",
+            "command": "search",
+            "payload": {
+                "query": "term",
+                "limit": 5,
+                "kinds": ["application"],
+                "now_millis": 100
+            }
+        })
+    );
+}
+
+#[test]
+fn ipc_dispatcher_executes_search_command() {
+    // 场景：前端发送 search 命令时，dispatcher 必须解码 payload、调用 CoreApi 并保留 request_id。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-search".to_owned(),
+        command: IpcCommand::Search,
+        payload: json!({
+            "query": "term",
+            "limit": 5,
+            "kinds": ["application"],
+            "now_millis": 100
+        }),
+    });
+
+    assert_eq!(response.request_id, "request-search");
+    assert_eq!(response.protocol_version, IPC_PROTOCOL_VERSION);
+    assert!(response.response.ok);
+    assert_eq!(response.response.data["api_version"], json!("core-api-v1"));
+    assert_eq!(response.response.data["results"][0]["resource"]["id"], json!("app-terminal"));
+}
+
+#[test]
+fn ipc_dispatcher_executes_recommend_command() {
+    // 场景：前端发送 recommend 命令时，dispatcher 必须返回统一 envelope，即使当前还没有 activity 也不能失败。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-recommend".to_owned(),
+        command: IpcCommand::Recommend,
+        payload: json!({
+            "limit": 5,
+            "kinds": ["application"],
+            "now_millis": 100
+        }),
+    });
+
+    assert_eq!(response.request_id, "request-recommend");
+    assert!(response.response.ok);
+    assert_eq!(response.response.data["api_version"], json!("core-api-v1"));
+}
+
+#[test]
+fn ipc_dispatcher_executes_record_selection_command() {
+    // 场景：前端发送 record_selection 命令时，dispatcher 必须记录用户最终打开的资源。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-selection".to_owned(),
+        command: IpcCommand::RecordSelection,
+        payload: json!({
+            "query": "term",
+            "selected_resource": ApiResource::from(resource()),
+            "selected_rank": 1,
+            "opened_at_millis": 200
+        }),
+    });
+
+    assert_eq!(response.request_id, "request-selection");
+    assert!(response.response.ok);
+    assert_eq!(response.response.data["recorded"], json!(true));
+}
+
+#[test]
+fn ipc_dispatcher_rejects_unsupported_protocol_version() {
+    // 场景：不同版本 IPC envelope 不能被静默接受，必须返回结构化错误。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: "speed-on-ipc-v0".to_owned(),
+        request_id: "request-bad-version".to_owned(),
+        command: IpcCommand::Search,
+        payload: json!({
+            "query": "term",
+            "limit": 5,
+            "kinds": ["application"],
+            "now_millis": 100
+        }),
+    });
+
+    assert!(!response.response.ok);
+    assert_eq!(response.response.error["error_code"], json!("CORE_INVALID_ARGUMENT"));
+    assert_eq!(response.response.error["module"], json!("ipc::JsonIpcDispatcher"));
+}
+
+#[test]
+fn ipc_dispatcher_rejects_invalid_payload_without_panic() {
+    // 场景：payload 缺字段或类型错误时，dispatcher 必须返回结构化错误，不能 panic 或返回成功。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-invalid-payload".to_owned(),
+        command: IpcCommand::Search,
+        payload: json!({
+            "query": "term",
+            "limit": "five"
+        }),
+    });
+
+    assert!(!response.response.ok);
+    assert_eq!(response.response.error["error_code"], json!("CORE_INVALID_ARGUMENT"));
+    assert_eq!(response.response.error["module"], json!("ipc::JsonIpcDispatcher::search"));
+}
+
+#[test]
+fn ipc_resource_kind_stays_snake_case_inside_payload() {
+    // 场景：IPC payload 复用 Core API DTO，因此 resource kind 必须继续保持 snake_case。
+    let resource = ApiResource {
+        id: "url-rust".to_owned(),
+        kind: ApiResourceKind::BrowserUrl,
+        title: "Rust".to_owned(),
+        target: "https://www.rust-lang.org".to_owned(),
+        icon_path: None,
+    };
+
+    assert_eq!(to_json(&resource)["kind"], json!("browser_url"));
+}
