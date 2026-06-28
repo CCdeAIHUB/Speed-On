@@ -8,6 +8,9 @@ repository.workspace = true
 [lib]
 path = "src/lib.rs"
 
+[dependencies]
+rusqlite = { version = "0.40.1", features = ["bundled"] }
+
 [lints.rust]
 unsafe_code = "forbid"
 
