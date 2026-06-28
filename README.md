@@ -45,15 +45,17 @@ The backend follows the Codex stability and anti-corruption development skill us
 
 ## Current implementation stage
 
-Stage 2 initializes search and logging contracts on top of the backend core:
+Stage 3 lands the SQLite repository behind the existing backend contracts:
 
 - Rust workspace.
 - Domain models.
 - Repository and platform abstraction traits.
 - SQLite schema contract v2.
+- SQLite migration runner using `PRAGMA user_version`.
+- SQLite-backed resource repository, search index repository, user operation log repository, and system log sink.
 - Recommendation service.
 - Search service with title, target, browser title, pinyin, pinyin-initial, and user-history ranking support.
 - User operation log and sanitized system log models.
-- TDD tests for recommendation behavior, search behavior, logging behavior, and schema expectations.
+- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, and SQLite persistence.
 
-Platform-specific scanners, log listeners, browser-history readers, SQLite repository implementation, pinyin alias builders, and frontend bindings will be added in later stages.
+Platform-specific scanners, OS log listeners, browser-history readers, pinyin alias builders, and frontend bindings will be added in later stages.
