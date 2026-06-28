@@ -7,6 +7,7 @@
 pub mod api;
 pub mod domain;
 pub mod error;
+pub mod ipc;
 pub mod logging;
 pub mod ports;
 pub mod search;
@@ -24,6 +25,7 @@ pub use domain::{
     ResourceKind,
 };
 pub use error::{AppError, AppResult};
+pub use ipc::{IpcCommand, IpcRequest, IpcResponse, JsonIpcDispatcher, IPC_PROTOCOL_VERSION};
 pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 pub use ports::{
     BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceRepository,
