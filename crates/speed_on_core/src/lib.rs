@@ -15,5 +15,7 @@ pub use domain::{
     ResourceKind,
 };
 pub use error::{AppError, AppResult};
-pub use ports::{InstalledApplicationScanner, ResourceRepository};
+pub use ports::{
+    BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceRepository,
+};
 pub use service::{IndexService, RecommendationService};
