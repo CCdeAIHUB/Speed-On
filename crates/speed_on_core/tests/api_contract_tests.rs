@@ -365,7 +365,7 @@ fn core_api_open_resource_returns_structured_opener_error() {
 
 #[test]
 fn core_api_refresh_applications_uses_scanner_and_updates_sqlite_index() {
-    // 场景：前端触发应用扫描时，Core 必须通过 InstalledApplicationScanner 并把结果写入 SQLite。
+    // 场景：前端触发应用扫描时，Core 必须写入资源和搜索别名。
     let mut store = ok(SqliteStore::open_in_memory_migrated());
 
     {
@@ -380,6 +380,18 @@ fn core_api_refresh_applications_uses_scanner_and_updates_sqlite_index() {
         assert!(response.ok);
         let data = some(response.data);
         assert_eq!(data.scanned_count, 1);
+        assert_eq!(data.alias_count, 2);
+
+        let search_response = api.search(ApiSearchRequest {
+            query: "notes".to_owned(),
+            limit: 5,
+            kinds: Some(vec![ApiResourceKind::Application]),
+            now_millis: 500,
+        });
+        assert!(search_response.ok);
+        let search_data = some(search_response.data);
+        assert_eq!(search_data.results.len(), 1);
+        assert_eq!(search_data.results[0].resource.id, "app-notes");
     }
 
     let kinds = [ResourceKind::Application];
