@@ -43,8 +43,19 @@ Every stdout line contains one complete JSON response.
 - `search`
 - `recommend`
 - `record_selection`
+- `open_resource`
 
 Command payloads are the same as `docs/api/core-api-v1.md`.
+
+## Open resource behavior
+
+The default `speed-on-ipc-stdio` binary currently has no platform `ResourceOpener` adapter. Therefore, an `open_resource` request returns `CORE_PLATFORM_UNSUPPORTED` rather than pretending to open the resource.
+
+```json
+{"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","response":{"ok":false,"data":null,"error":{"error_code":"CORE_PLATFORM_UNSUPPORTED","message":"open_resource requires a platform ResourceOpener adapter","module":"ipc::JsonIpcDispatcher::open_resource","recoverable":false,"suggestion":null,"trace_id":null}}}
+```
+
+A future platform-specific transport or stdio mode can use `JsonIpcDispatcherWithOpener` to wire a real Windows/macOS/Linux opener implementation.
 
 ## Malformed request behavior
 
