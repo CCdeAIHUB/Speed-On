@@ -23,6 +23,8 @@ Speed-On 已经定义了 `open_resource` Core API / IPC 契约，并通过 `Reso
 7. 新增 `ProcessCommandRunner`，使用 `std::process::Command` 执行命令，参数以 args 传入，不使用 shell 字符串拼接。
 8. 新增 `CommandResourceOpener<R>`，组合 validator、planner 和 runner，实现 Core 的 `ResourceOpener`。
 9. 测试只使用 mock runner，不真实打开系统应用、文件、文件夹或 URL。
+10. `CoreApi::open_resource_with` 在 opener 成功后写入 `activity_records` 并更新 `resource_usage_stats`。
+11. `speed-on-ipc-stdio` 默认不启用真实 command opener；只有显式传入 `--enable-command-opener` 时才接入 `CommandResourceOpener<ProcessCommandRunner>`。
 
 ## 原因
 
@@ -32,6 +34,8 @@ Speed-On 已经定义了 `open_resource` Core API / IPC 契约，并通过 `Reso
 - 不使用 shell 拼接可以降低命令注入风险。
 - `CommandRunner` 让测试只验证计划和调用，不触发真实 OS 行为。
 - 命令型 opener 是第一版通用方案，后续可以逐步替换成更原生的 Windows/macOS/Linux API。
+- 打开成功后记录 activity/usage stats，可以让推荐系统学习用户真实打开行为。
+- stdio 中真实打开能力显式 opt-in，避免调试或前端早期集成阶段意外启动本机资源。
 
 ## 替代方案
 
@@ -43,16 +47,18 @@ Speed-On 已经定义了 `open_resource` Core API / IPC 契约，并通过 `Reso
 
 长期更理想，但需要分别处理 Windows、macOS、Linux API、权限、错误映射和测试环境。当前阶段先用命令型 adapter 建立可测试边界。
 
-### 方案 C：命令型 opener + runner 注入
+### 方案 C：命令型 opener + runner 注入 + stdio 显式启用
 
-这是当前选择。它简单、跨平台、可测试，并且保持后续替换空间。
+这是当前选择。它简单、跨平台、可测试、默认安全关闭，并且保持后续替换空间。
 
 ## 影响范围
 
 - Workspace 新增 `crates/speed_on_platform`。
 - 新增 target validator、command planner、runner 和 command opener。
-- 新增 opener validation/planning tests。
-- README 更新为 Stage 8。
+- `speed_on_ipc_stdio` 新增 `--enable-command-opener`。
+- `open_resource` 成功后会写入 activity/usage stats。
+- 新增/更新 opener、API、IPC、stdio transport tests。
+- README 更新为 Stage 9。
 
 ## 风险
 
@@ -60,14 +66,13 @@ Speed-On 已经定义了 `open_resource` Core API / IPC 契约，并通过 `Reso
 - Linux 环境可能缺少 `xdg-open` 或桌面环境不可用。
 - Windows 使用 `explorer` 打开应用/文件/URL 的行为可能需要后续细分。
 - URL whitelist 当前只允许 http/https/file，后续是否支持其他 scheme 必须通过单独 ADR 评估。
-- 当前 opener 成功后还没有自动写入 activity_records，需要后续接入。
+- 打开资源是不可回滚的系统行为；若打开成功但 activity 写入失败，Core 会返回结构化错误以避免沉默失败。
 
 ## 未来演进
 
-1. 将 `CommandResourceOpener` 显式接入 stdio binary 的可选模式。
-2. 增加打开成功后的 activity 记录。
-3. 增加打开失败后的脱敏 system log。
-4. 实现 Windows 原生 opener adapter。
-5. 实现 macOS 原生 opener adapter。
-6. 实现 Linux desktop-aware opener adapter。
-7. 增加路径存在性校验、应用 bundle 校验和 URL scheme 配置。
+1. 增加打开失败后的脱敏 system log。
+2. 实现 Windows 原生 opener adapter。
+3. 实现 macOS 原生 opener adapter。
+4. 实现 Linux desktop-aware opener adapter。
+5. 增加路径存在性校验、应用 bundle 校验和 URL scheme 配置。
+6. 增加用户权限开关和首次打开确认策略。
