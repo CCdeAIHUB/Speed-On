@@ -36,6 +36,8 @@ The Rust core is responsible for:
 13. Providing a runnable stdio JSON Lines IPC transport for early cross-platform frontend integration and debugging.
 14. Providing an `open_resource` API / IPC contract behind a platform `ResourceOpener` boundary.
 15. Providing a first command-based `ResourceOpener` adapter with shared target validation and URL scheme checks.
+16. Recording successful `open_resource` actions into activity/usage stats so future recommendations learn from opened resources.
+17. Allowing stdio IPC to opt into real command opening only through the explicit `--enable-command-opener` flag.
 
 ## Architecture rules
 
@@ -52,10 +54,11 @@ The backend follows the Codex stability and anti-corruption development skill us
 - Concrete transports must remain thin adapters and must not duplicate Core search/recommend/selection logic.
 - Opening resources must go through a platform `ResourceOpener`; Core API and IPC must not directly invoke OS commands.
 - Resource openers must validate targets and URL schemes before invoking platform commands.
+- Real command opening must be opt-in for stdio IPC and must not be silently enabled by default.
 
 ## Current implementation stage
 
-Stage 8 adds the first platform opener adapter crate:
+Stage 9 completes the first end-to-end opener path behind an explicit opt-in flag:
 
 - Rust workspace.
 - Domain models.
@@ -69,8 +72,9 @@ Stage 8 adds the first platform opener adapter crate:
 - Core API v1 DTOs and response envelope for search, recommend, record_selection, and open_resource.
 - JSON IPC v1 envelope and dispatcher for search, recommend, record_selection, and open_resource.
 - `speed-on-ipc-stdio` binary that reads one IPC request JSON per stdin line and writes one IPC response JSON per stdout line.
+- Optional `speed-on-ipc-stdio --enable-command-opener` mode for real command-based resource opening.
 - `speed_on_platform` crate with target validation, URL scheme checks, platform command planning, and injectable command runner.
-- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, stdio transport behavior, and platform opener validation/planning.
+- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, stdio transport behavior, command opener opt-in, and platform opener validation/planning.
 
 Platform-specific scanners, OS log listeners, browser-history readers, pinyin alias builders, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
 
