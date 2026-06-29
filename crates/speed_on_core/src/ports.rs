@@ -15,6 +15,15 @@ pub trait InstalledApplicationScanner {
     fn scan_installed_applications(&self) -> AppResult<Vec<IndexedResource>>;
 }
 
+impl<T> InstalledApplicationScanner for &T
+where
+    T: InstalledApplicationScanner,
+{
+    fn scan_installed_applications(&self) -> AppResult<Vec<IndexedResource>> {
+        (**self).scan_installed_applications()
+    }
+}
+
 /// Reads browser history entries that can become recommendation resources.
 ///
 /// Implementations must handle browser privacy, locked profile files, and user
