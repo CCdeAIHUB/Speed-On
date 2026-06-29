@@ -81,6 +81,20 @@ pub trait SearchAliasRepository {
     ) -> AppResult<()>;
 }
 
+impl<T> SearchAliasRepository for &mut T
+where
+    T: SearchAliasRepository,
+{
+    fn upsert_search_aliases(
+        &mut self,
+        resource_id: &str,
+        aliases: &[SearchAlias],
+        created_at_millis: u64,
+    ) -> AppResult<()> {
+        (**self).upsert_search_aliases(resource_id, aliases, created_at_millis)
+    }
+}
+
 /// Query boundary for frontend search.
 ///
 /// Implementations should load normalized aliases, browser title metadata, pinyin
