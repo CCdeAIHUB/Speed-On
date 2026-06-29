@@ -130,7 +130,7 @@ fn recommendations_filter_by_requested_resource_kinds() {
 #[test]
 fn recent_activity_breaks_ties_when_open_counts_are_equal() {
     // 场景：两个资源打开次数相同时，更近打开的资源应该排在更前面。
-    let now: u64 = 1_000_000_000;
+    let now: u64 = 1_000_000_000_000;
     let repository = InMemoryRepository {
         candidates: vec![
             CandidateResource::new(
