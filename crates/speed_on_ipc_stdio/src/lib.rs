@@ -64,7 +64,7 @@ impl StdioConfig {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--db" => {
-                    database_path = args.next();
+                    database_path = Some(read_database_path_arg(args.next())?);
                 }
                 "--enable-command-opener" => {
                     enable_command_opener = true;
@@ -92,6 +92,16 @@ impl StdioConfig {
             database_path: PathBuf::from(database_path),
             enable_command_opener,
         })
+    }
+}
+
+fn read_database_path_arg(value: Option<String>) -> StdioResult<String> {
+    match value {
+        Some(path) if !path.trim().is_empty() && !path.starts_with("--") => Ok(path),
+        _ => Err(StdioTransportError::invalid_input(
+            "--db requires a non-empty database path value",
+            "ipc_stdio::StdioConfig",
+        )),
     }
 }
 
