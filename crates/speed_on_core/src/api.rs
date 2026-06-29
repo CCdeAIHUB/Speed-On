@@ -6,10 +6,11 @@ use crate::domain::{
 };
 use crate::error::AppError;
 use crate::ports::{
-    ResourceOpener, ResourceRepository, SearchIndexRepository, UserOperationLogRepository,
+    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchIndexRepository,
+    UserOperationLogRepository,
 };
 use crate::search::{SearchMatchKind, SearchRequest, SearchResult, SearchService};
-use crate::service::RecommendationService;
+use crate::service::{IndexService, RecommendationService};
 
 pub const CORE_API_VERSION: &str = "core-api-v1";
 
@@ -274,6 +275,17 @@ impl ApiOpenResourceResponse {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ApiRefreshApplicationsRequest {
+    pub requested_at_millis: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ApiRefreshApplicationsResponse {
+    pub api_version: String,
+    pub scanned_count: usize,
+}
+
 pub struct CoreApi<R>
 where
     R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
@@ -367,6 +379,26 @@ where
                     Err(error) => ApiResponse::failure(error),
                 }
             }
+            Err(error) => ApiResponse::failure(error),
+        }
+    }
+
+    pub fn refresh_applications_with<S>(
+        &mut self,
+        scanner: S,
+        _request: ApiRefreshApplicationsRequest,
+    ) -> ApiResponse<ApiRefreshApplicationsResponse>
+    where
+        S: InstalledApplicationScanner,
+    {
+        // IndexService owns the resource upsert flow. API only adapts the
+        // frontend command into the existing indexing service boundary.
+        let mut service = IndexService::new(&mut self.repository, scanner);
+        match service.refresh_installed_applications() {
+            Ok(scanned_count) => ApiResponse::success(ApiRefreshApplicationsResponse {
+                api_version: CORE_API_VERSION.to_owned(),
+                scanned_count,
+            }),
             Err(error) => ApiResponse::failure(error),
         }
     }
