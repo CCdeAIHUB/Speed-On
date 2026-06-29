@@ -115,3 +115,26 @@ pub struct Recommendation {
     pub score: u64,
     pub reason: String,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpenResourceRequest {
+    pub resource: IndexedResource,
+    pub requested_at_millis: u64,
+}
+
+impl OpenResourceRequest {
+    pub fn new(resource: IndexedResource, requested_at_millis: u64) -> Self {
+        Self {
+            resource,
+            requested_at_millis,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpenResourceOutcome {
+    pub resource_id: String,
+    pub kind: ResourceKind,
+    pub target: String,
+    pub opened_at_millis: u64,
+}
