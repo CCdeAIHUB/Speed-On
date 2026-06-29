@@ -42,6 +42,7 @@ The Rust core is responsible for:
 19. Allowing stdio IPC to opt into real application scanning only through the explicit `--enable-application-scan` flag.
 20. Generating title, target, full pinyin, and pinyin-initial search aliases after application refresh so scanned applications are immediately searchable.
 21. Maintaining a detailed IPC protocol reference with valid requests, success responses, failure responses, and failure reasons.
+22. Running Rust CI checks for formatting, linting, and tests on push and pull requests.
 
 ## Architecture rules
 
@@ -61,11 +62,12 @@ The backend follows the Codex stability and anti-corruption development skill us
 - Application scanning must go through a platform `InstalledApplicationScanner`; Core API and IPC must not scan OS directories directly.
 - Search alias writes must go through `SearchAliasRepository`; Core must not depend on SQLite table details.
 - Pinyin conversion must stay behind `PinyinAliasProvider` so it can be replaced or enhanced without rewriting search ranking.
+- Rust CI must pass `cargo fmt`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` before code is considered stable.
 - Real command opening and real application scanning must be opt-in for stdio IPC and must not be silently enabled by default.
 
 ## Current implementation stage
 
-Stage 12 completes real pinyin alias provider integration and the service borrow-boundary cleanup:
+Stage 13 adds the Rust CI quality gate and completes another compile-risk cleanup pass:
 
 - Rust workspace.
 - Domain models.
@@ -85,7 +87,8 @@ Stage 12 completes real pinyin alias provider integration and the service borrow
 - `speed_on_platform` crate with target validation, URL scheme checks, platform command planning, injectable command runner, and installed application scanner.
 - `SearchAliasBuilder` that generates title/target aliases and uses `PinyinCrateAliasProvider` for full pinyin and pinyin-initial aliases.
 - `IndexService` split into `service/index.rs`, with refreshed resources returned through a consuming method so `CoreApi` can write aliases without a repository borrow conflict.
-- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, refresh_applications contracts, alias builder behavior, stdio transport behavior, command opener opt-in, application scan opt-in, platform opener validation/planning, and platform application scanning.
+- `.github/workflows/rust-ci.yml` runs formatting, clippy, and test checks.
+- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, refresh_applications contracts, alias builder behavior, pinyin provider behavior, stdio transport behavior, command opener opt-in, application scan opt-in, platform opener validation/planning, and platform application scanning.
 
 OS log listeners, browser-history readers, multi-pronunciation pinyin improvements, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
 
