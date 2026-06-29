@@ -4,7 +4,7 @@ use crate::domain::{
 };
 use crate::error::AppResult;
 use crate::logging::{SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
-use crate::search::SearchCandidate;
+use crate::search::{SearchAlias, SearchCandidate};
 
 /// Scans installed applications from the current desktop operating system.
 ///
@@ -65,6 +65,20 @@ pub trait ResourceRepository {
         &self,
         kinds: Option<&[ResourceKind]>,
     ) -> AppResult<Vec<CandidateResource>>;
+}
+
+/// Persistence boundary for generated search aliases.
+///
+/// Alias generation is a Core indexing concern, but the actual write format is
+/// storage-specific. Keeping it behind a port lets SQLite own table details while
+/// Core can build title/target/pinyin aliases consistently after scans.
+pub trait SearchAliasRepository {
+    fn upsert_search_aliases(
+        &mut self,
+        resource_id: &str,
+        aliases: &[SearchAlias],
+        created_at_millis: u64,
+    ) -> AppResult<()>;
 }
 
 /// Query boundary for frontend search.
