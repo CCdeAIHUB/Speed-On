@@ -24,11 +24,25 @@ pub trait PinyinAliasProvider {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
-pub struct NoopPinyinAliasProvider;
+pub struct DefaultPinyinAliasProvider;
 
-impl PinyinAliasProvider for NoopPinyinAliasProvider {
+impl PinyinAliasProvider for DefaultPinyinAliasProvider {
     fn aliases_for_title(&self, title: &str) -> PinyinAliases {
         PinyinCrateAliasProvider.aliases_for_title(title)
+    }
+}
+
+/// Delegate `PinyinAliasProvider` through references so that `&dyn PinyinAliasProvider`
+/// and `Box<dyn PinyinAliasProvider>` can be used wherever a `P: PinyinAliasProvider` is expected.
+impl<P: PinyinAliasProvider + ?Sized> PinyinAliasProvider for &P {
+    fn aliases_for_title(&self, title: &str) -> PinyinAliases {
+        (**self).aliases_for_title(title)
+    }
+}
+
+impl<P: PinyinAliasProvider + ?Sized> PinyinAliasProvider for Box<P> {
+    fn aliases_for_title(&self, title: &str) -> PinyinAliases {
+        (**self).aliases_for_title(title)
     }
 }
 
@@ -40,9 +54,9 @@ where
     pinyin_provider: P,
 }
 
-impl Default for SearchAliasBuilder<NoopPinyinAliasProvider> {
+impl Default for SearchAliasBuilder<DefaultPinyinAliasProvider> {
     fn default() -> Self {
-        Self::new(NoopPinyinAliasProvider)
+        Self::new(DefaultPinyinAliasProvider)
     }
 }
 

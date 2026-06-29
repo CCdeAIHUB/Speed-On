@@ -83,7 +83,7 @@ impl CommandRunner for ProcessCommandRunner {
         if status.success() {
             Ok(())
         } else {
-            Err(AppError::platform_unsupported(
+            Err(AppError::platform_failure(
                 format!("platform open command exited with status: {status}"),
                 "platform::ProcessCommandRunner",
             ))

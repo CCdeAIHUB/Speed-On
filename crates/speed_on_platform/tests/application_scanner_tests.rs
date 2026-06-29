@@ -136,3 +136,47 @@ fn platform_application_scanner_implements_core_scanner_port() {
 
     ok(fs::remove_dir_all(root));
 }
+
+#[test]
+fn linux_desktop_scanner_preserves_quoted_exec_paths_with_spaces() {
+    // 场景：.desktop Exec 值中带引号的路径含空格时，不能被 split_whitespace 截断。
+    let root = test_root("linux-quoted-exec");
+    ok(fs::write(
+        root.join("myapp.desktop"),
+        "[Desktop Entry]\nName=My App\nExec=\"/opt/my app/myapp\" %U\n",
+    ));
+
+    let resources = ok(scan_applications_from_roots(&ApplicationScanRoots::new(
+        "linux",
+        vec![root.clone()],
+        500,
+    )));
+
+    assert_eq!(resources.len(), 1);
+    assert_eq!(resources[0].target, "/opt/my app/myapp");
+
+    ok(fs::remove_dir_all(root));
+}
+
+#[test]
+fn linux_desktop_scanner_ignores_keys_outside_desktop_entry_section() {
+    // 场景：.desktop 文件可以包含多个 section，只有 [Desktop Entry] 中的键应被读取。
+    let root = test_root("linux-multi-section");
+    ok(fs::write(
+        root.join("app.desktop"),
+        "[Desktop Entry]\nName=Real App\nExec=/usr/bin/real-app\n\
+         [Desktop Action NewWindow]\nName=Fake App\nExec=/usr/bin/fake-app\n",
+    ));
+
+    let resources = ok(scan_applications_from_roots(&ApplicationScanRoots::new(
+        "linux",
+        vec![root.clone()],
+        500,
+    )));
+
+    assert_eq!(resources.len(), 1);
+    assert_eq!(resources[0].title, "Real App");
+    assert_eq!(resources[0].target, "/usr/bin/real-app");
+
+    ok(fs::remove_dir_all(root));
+}

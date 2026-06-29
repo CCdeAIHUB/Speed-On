@@ -1,7 +1,15 @@
+# Rust
 /target/
-**/*.rs.bk
+
+# .NET
+speed-on-client/bin/
+speed-on-client/obj/
+*.user
+
+# OS
 .DS_Store
 Thumbs.db
-.idea/
+
+# IDE
 .vscode/
-*.log
+.idea/

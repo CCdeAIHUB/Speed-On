@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::Path;
 
 use rusqlite::{params, params_from_iter, Connection};
@@ -235,6 +236,7 @@ impl SqliteStore {
         Ok(resources)
     }
 
+    #[allow(dead_code)]
     fn load_aliases_for_resource(&self, resource_id: &str) -> AppResult<Vec<SearchAlias>> {
         let mut statement = self
             .connection
@@ -264,6 +266,7 @@ impl SqliteStore {
         Ok(aliases)
     }
 
+    #[allow(dead_code)]
     fn load_selection_signals_for_resource(
         &self,
         resource_id: &str,
@@ -312,6 +315,112 @@ impl SqliteStore {
         }
 
         Ok(signals)
+    }
+
+    /// Batch-load aliases for multiple resources in a single query.
+    ///
+    /// This avoids the N+1 query problem where `load_search_candidates` would
+    /// otherwise issue one alias query per resource.
+    fn load_aliases_for_resources(
+        &self,
+        resource_ids: &[String],
+    ) -> AppResult<HashMap<String, Vec<SearchAlias>>> {
+        let mut map: HashMap<String, Vec<SearchAlias>> = HashMap::new();
+        if resource_ids.is_empty() {
+            return Ok(map);
+        }
+
+        let placeholders = build_placeholders(resource_ids.len());
+        let sql = format!(
+            r#"
+            SELECT resource_id, alias_kind, alias_text
+            FROM resource_search_aliases
+            WHERE resource_id IN ({placeholders})
+            ORDER BY resource_id, alias_kind, alias_text
+            "#
+        );
+        let mut statement = self
+            .connection
+            .prepare(&sql)
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources"))?;
+        let rows = statement
+            .query_map(params_from_iter(resource_ids.iter()), |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources"))?;
+
+        for row in rows {
+            let (resource_id, kind, value) = row.map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources")
+            })?;
+            let alias = SearchAlias::new(SearchAliasKind::try_from(kind.as_str())?, value);
+            map.entry(resource_id).or_default().push(alias);
+        }
+
+        Ok(map)
+    }
+
+    /// Batch-load selection signals for multiple resources in a single query.
+    fn load_selection_signals_for_resources(
+        &self,
+        resource_ids: &[String],
+    ) -> AppResult<HashMap<String, Vec<UserSelectionSignal>>> {
+        let mut map: HashMap<String, Vec<UserSelectionSignal>> = HashMap::new();
+        if resource_ids.is_empty() {
+            return Ok(map);
+        }
+
+        let placeholders = build_placeholders(resource_ids.len());
+        let sql = format!(
+            r#"
+            SELECT resource_id, normalized_query, selection_count, last_selected_at_millis
+            FROM query_resource_selection_stats
+            WHERE resource_id IN ({placeholders})
+            ORDER BY resource_id, selection_count DESC, last_selected_at_millis DESC
+            "#
+        );
+        let mut statement = self
+            .connection
+            .prepare(&sql)
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
+            })?;
+        let rows = statement
+            .query_map(params_from_iter(resource_ids.iter()), |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, i64>(2)?,
+                    row.get::<_, i64>(3)?,
+                ))
+            })
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
+            })?;
+
+        for row in rows {
+            let (resource_id, normalized_query, selection_count, last_selected_at_millis) = row
+                .map_err(|error| {
+                    sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
+                })?;
+            map.entry(resource_id).or_default().push(UserSelectionSignal {
+                normalized_query,
+                selection_count: i64_to_u64(
+                    selection_count,
+                    "storage::SqliteStore::load_selection_signals_for_resources",
+                )?,
+                last_selected_at_millis: i64_to_u64(
+                    last_selected_at_millis,
+                    "storage::SqliteStore::load_selection_signals_for_resources",
+                )?,
+            });
+        }
+
+        Ok(map)
     }
 }
 
@@ -428,8 +537,14 @@ impl SearchIndexRepository for SqliteStore {
         kinds: Option<&[ResourceKind]>,
     ) -> AppResult<Vec<SearchCandidate>> {
         let rows = self.load_resource_usage_rows(kinds)?;
-        let mut candidates = Vec::new();
 
+        // Collect all resource IDs upfront so we can batch-load aliases and
+        // selection signals instead of issuing one query per resource (N+1).
+        let resource_ids: Vec<String> = rows.iter().map(|row| row.id.clone()).collect();
+        let aliases_by_resource = self.load_aliases_for_resources(&resource_ids)?;
+        let signals_by_resource = self.load_selection_signals_for_resources(&resource_ids)?;
+
+        let mut candidates = Vec::new();
         for row in rows {
             let resource = indexed_resource_from_row(row.clone())?;
             let open_count = i64_to_u64(
@@ -440,8 +555,12 @@ impl SearchIndexRepository for SqliteStore {
                 row.last_opened_at_millis,
                 "storage::SqliteStore::load_search_candidates",
             )?;
-            let aliases = self.load_aliases_for_resource(&resource.id)?;
-            let signals = self.load_selection_signals_for_resource(&resource.id)?;
+            let aliases = aliases_by_resource
+                .remove(&resource.id)
+                .unwrap_or_default();
+            let signals = signals_by_resource
+                .remove(&resource.id)
+                .unwrap_or_default();
 
             candidates.push(
                 SearchCandidate::new(resource)
@@ -599,6 +718,13 @@ fn append_kind_filter(sql: &mut String, kind_values: &[String]) {
         sql.push('?');
     }
     sql.push(')');
+}
+
+/// Build a comma-separated list of `?` placeholders for use in `IN (...)` clauses.
+fn build_placeholders(count: usize) -> String {
+    (0..count)
+        .map(|index| if index == 0 { "?".to_owned() } else { ", ?".to_owned() })
+        .collect()
 }
 
 fn kind_filter_values(kinds: Option<&[ResourceKind]>) -> Vec<String> {

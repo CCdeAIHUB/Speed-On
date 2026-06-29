@@ -1,6 +1,8 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use serde::{Deserialize, Serialize};
 
-use crate::alias::{NoopPinyinAliasProvider, SearchAliasBuilder};
+use crate::alias::{DefaultPinyinAliasProvider, PinyinAliasProvider, SearchAliasBuilder};
 use crate::domain::{
     ActivityRecord, IndexedResource, OpenResourceOutcome, OpenResourceRequest, Recommendation,
     RecommendationRequest, ResourceKind,
@@ -293,6 +295,7 @@ where
     R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     repository: R,
+    pinyin_provider: Box<dyn PinyinAliasProvider>,
 }
 
 impl<R> CoreApi<R>
@@ -300,7 +303,25 @@ where
     R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     pub fn new(repository: R) -> Self {
-        Self { repository }
+        Self {
+            repository,
+            pinyin_provider: Box::new(DefaultPinyinAliasProvider),
+        }
+    }
+
+    /// Replace the default pinyin alias provider with a custom one.
+    ///
+    /// This satisfies the architecture rule that pinyin conversion must stay
+    /// behind `PinyinAliasProvider` so it can be replaced or enhanced without
+    /// rewriting search ranking or alias generation.
+    pub fn with_pinyin_provider(
+        repository: R,
+        provider: Box<dyn PinyinAliasProvider>,
+    ) -> Self {
+        Self {
+            repository,
+            pinyin_provider: provider,
+        }
     }
 
     pub fn search(&mut self, request: ApiSearchRequest) -> ApiResponse<ApiSearchResponse> {
@@ -376,10 +397,13 @@ where
         match opener.open_resource(&open_request) {
             Ok(outcome) => {
                 let activity = activity_record_from_open_outcome(&outcome);
-                match self.repository.record_activity(&activity) {
-                    Ok(()) => ApiResponse::success(ApiOpenResourceResponse::from_outcome(outcome, true)),
-                    Err(error) => ApiResponse::failure(error),
-                }
+                // The resource has already been opened successfully.  If
+                // recording the activity fails we must NOT report the whole
+                // operation as a failure — the frontend would incorrectly think
+                // nothing was launched.  Instead we report success with
+                // `activity_recorded = false`.
+                let activity_recorded = self.repository.record_activity(&activity).is_ok();
+                ApiResponse::success(ApiOpenResourceResponse::from_outcome(outcome, activity_recorded))
             }
             Err(error) => ApiResponse::failure(error),
         }
@@ -415,7 +439,7 @@ where
         resources: &[IndexedResource],
         created_at_millis: u64,
     ) -> crate::error::AppResult<usize> {
-        let builder = SearchAliasBuilder::new(NoopPinyinAliasProvider);
+        let builder = SearchAliasBuilder::new(&*self.pinyin_provider);
         let mut alias_count = 0;
 
         for resource in resources {
@@ -430,8 +454,10 @@ where
 }
 
 fn activity_record_from_open_outcome(outcome: &OpenResourceOutcome) -> ActivityRecord {
+    static ACTIVITY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+    let seq = ACTIVITY_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     ActivityRecord {
-        id: format!("open-{}-{}", outcome.opened_at_millis, outcome.resource_id),
+        id: format!("open-{}-{}-{}", outcome.opened_at_millis, seq, outcome.resource_id),
         resource_id: Some(outcome.resource_id.clone()),
         kind: outcome.kind,
         target: outcome.target.clone(),

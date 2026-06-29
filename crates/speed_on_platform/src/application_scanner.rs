@@ -143,9 +143,17 @@ fn parse_linux_desktop_entry(path: &Path, now_millis: u64) -> Option<IndexedReso
 }
 
 fn desktop_value(content: &str, key: &str) -> Option<String> {
+    let mut in_desktop_entry = false;
     for line in content.lines() {
         let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('[') {
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        if trimmed.starts_with('[') {
+            in_desktop_entry = trimmed == "[Desktop Entry]";
+            continue;
+        }
+        if !in_desktop_entry {
             continue;
         }
         if let Some((line_key, value)) = trimmed.split_once('=') {
@@ -158,11 +166,42 @@ fn desktop_value(content: &str, key: &str) -> Option<String> {
 }
 
 fn clean_desktop_exec(value: &str) -> String {
-    value
-        .split_whitespace()
+    split_desktop_exec(value)
+        .into_iter()
         .filter(|part| !part.starts_with('%'))
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+/// Split a `.desktop` `Exec` value respecting double-quoted segments.
+///
+/// The `Exec` key in `.desktop` files uses a shell-like syntax where paths
+/// containing spaces can be quoted, e.g. `Exec="/opt/my app/app" %U`.
+/// A naive `split_whitespace` would break such paths apart.
+fn split_desktop_exec(value: &str) -> Vec<String> {
+    let mut parts = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+
+    for ch in value.chars() {
+        match ch {
+            '"' => {
+                in_quotes = !in_quotes;
+            }
+            c if c.is_whitespace() && !in_quotes => {
+                if !current.is_empty() {
+                    parts.push(std::mem::take(&mut current));
+                }
+            }
+            _ => {
+                current.push(ch);
+            }
+        }
+    }
+    if !current.is_empty() {
+        parts.push(current);
+    }
+    parts
 }
 
 fn make_macos_app_resource(path: &Path, now_millis: u64) -> IndexedResource {
@@ -247,9 +286,12 @@ fn default_roots_for_os(os: &str) -> Vec<PathBuf> {
 }
 
 fn home_join(relative: &str) -> PathBuf {
-    match std::env::var("HOME") {
-        Ok(home) => PathBuf::from(home).join(relative),
-        Err(_) => PathBuf::new(),
+    let home = std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .ok();
+    match home {
+        Some(home) if !home.is_empty() => PathBuf::from(home).join(relative),
+        _ => PathBuf::new(),
     }
 }
 

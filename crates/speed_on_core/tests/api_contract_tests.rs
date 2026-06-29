@@ -1,11 +1,13 @@
 use serde_json::{json, Value};
 use speed_on_core::{
-    ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecommendationResult,
+    ActivityRecord, ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecommendationResult,
     ApiRecordSelectionRequest, ApiRefreshApplicationsRequest, ApiResource, ApiResourceKind,
     ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResult, AppError, AppResult,
-    CoreApi, IndexedResource, InstalledApplicationScanner, OpenResourceOutcome, OpenResourceRequest,
-    Recommendation, ResourceKind, ResourceOpener, ResourceRepository, SearchAlias,
-    SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
+    CandidateResource, CoreApi, IndexedResource, InstalledApplicationScanner,
+    OpenResourceOutcome, OpenResourceRequest, Recommendation, ResourceKind, ResourceOpener,
+    ResourceRepository, SearchAlias, SearchAliasKind, SearchAliasRepository, SearchCandidate,
+    SearchIndexRepository, SearchMatchKind, SearchResult, SqliteStore, UserOperationLogRepository,
+    UserSearchLogEntry, UserSelectionLogEntry,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -399,4 +401,97 @@ fn core_api_refresh_applications_uses_scanner_and_updates_sqlite_index() {
     assert_eq!(candidates.len(), 1);
     assert_eq!(candidates[0].resource.id, "app-notes");
     assert_eq!(candidates[0].resource.title, "Notes");
+}
+
+// ---------------------------------------------------------------------------
+// Mock repository that can be configured to fail on `record_activity`.
+// Used to verify that `open_resource_with` still reports success when the
+// resource was opened but the post-open activity log write fails.
+// ---------------------------------------------------------------------------
+
+struct FailingActivityStore {
+    inner: SqliteStore,
+}
+
+impl FailingActivityStore {
+    fn new() -> Self {
+        Self {
+            inner: ok(SqliteStore::open_in_memory_migrated()),
+        }
+    }
+}
+
+impl ResourceRepository for FailingActivityStore {
+    fn upsert_resources(&mut self, resources: &[IndexedResource]) -> AppResult<()> {
+        self.inner.upsert_resources(resources)
+    }
+
+    fn record_activity(&mut self, _activity: &ActivityRecord) -> AppResult<()> {
+        Err(AppError::storage_failure(
+            "mock: activity recording is disabled",
+            "tests::FailingActivityStore",
+        ))
+    }
+
+    fn load_recommendation_candidates(
+        &self,
+        kinds: Option<&[ResourceKind]>,
+    ) -> AppResult<Vec<CandidateResource>> {
+        self.inner.load_recommendation_candidates(kinds)
+    }
+}
+
+impl SearchAliasRepository for FailingActivityStore {
+    fn upsert_search_aliases(
+        &mut self,
+        resource_id: &str,
+        aliases: &[SearchAlias],
+        created_at_millis: u64,
+    ) -> AppResult<()> {
+        self.inner
+            .upsert_search_aliases(resource_id, aliases, created_at_millis)
+    }
+}
+
+impl SearchIndexRepository for FailingActivityStore {
+    fn load_search_candidates(
+        &self,
+        kinds: Option<&[ResourceKind]>,
+    ) -> AppResult<Vec<SearchCandidate>> {
+        self.inner.load_search_candidates(kinds)
+    }
+}
+
+impl UserOperationLogRepository for FailingActivityStore {
+    fn record_user_search(&mut self, entry: &UserSearchLogEntry) -> AppResult<()> {
+        self.inner.record_user_search(entry)
+    }
+
+    fn record_user_selection(&mut self, entry: &UserSelectionLogEntry) -> AppResult<()> {
+        self.inner.record_user_selection(entry)
+    }
+}
+
+#[test]
+fn core_api_open_resource_succeeds_when_activity_recording_fails() {
+    // 场景：资源已经成功打开后，如果活动日志写入失败，API 必须仍然返回成功，
+    // 并标记 activity_recorded = false，而不是让前端误以为打开失败。
+    let mut store = FailingActivityStore::new();
+    ok(store.upsert_resources(&[resource()]));
+    let mut opener = RecordingOpener::new();
+
+    let mut api = CoreApi::new(store);
+    let response = api.open_resource_with(
+        &mut opener,
+        ApiOpenResourceRequest {
+            resource: ApiResource::from(resource()),
+            requested_at_millis: 300,
+        },
+    );
+
+    assert!(response.ok);
+    let data = some(response.data);
+    assert!(data.opened);
+    assert!(!data.activity_recorded);
+    assert_eq!(data.resource_id, "app-terminal");
 }

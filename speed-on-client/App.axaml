@@ -1,0 +1,63 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SpeedOnClient.App"
+             RequestedThemeVariant="Dark">
+
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="Window.mainWindow">
+            <Setter Property="SystemDecorations" Value="None"/>
+            <Setter Property="ShowInTaskbar" Value="False"/>
+            <Setter Property="Topmost" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="TransparencyLevelHint" Value="AcrylicBlur"/>
+        </Style>
+        <Style Selector="Border.windowRoot">
+            <Setter Property="Background" Value="#E8202020"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="BorderBrush" Value="#40FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 8 24 0 #80000000"/>
+        </Style>
+        <Style Selector="TextBox.searchInput">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#F0FFFFFF"/>
+            <Setter Property="CaretBrush" Value="#FF6C9CFF"/>
+            <Setter Property="SelectionBrush" Value="#406C9CFF"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="Padding" Value="20,14"/>
+            <Setter Property="Watermark" Value="搜索应用、文件或输入网址..."/>
+        </Style>
+        <Style Selector="ListBox.resultsList">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,0,8,8"/>
+        </Style>
+        <Style Selector="ListBoxItem.resultItem">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Foreground" Value="#CCFFFFFF"/>
+        </Style>
+        <Style Selector="ListBoxItem.resultItem:selected">
+            <Setter Property="Background" Value="#406C9CFF"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="ListBoxItem.resultItem:pointerover">
+            <Setter Property="Background" Value="#20FFFFFF"/>
+        </Style>
+        <Style Selector="TextBlock.itemTitle">
+            <Setter Property="Foreground" Value="#F0FFFFFF"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="TextBlock.itemSubtitle">
+            <Setter Property="Foreground" Value="#80FFFFFF"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="TextBlock.itemCategory">
+            <Setter Property="Foreground" Value="#606C9CFF"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+    </Application.Styles>
+</Application>

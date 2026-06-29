@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:m="using:SpeedOnClient.Models"
+        x:Class="SpeedOnClient.Views.MainWindow"
+        Classes="mainWindow"
+        Width="640"
+        MaxHeight="480"
+        SizeToContent="Height"
+        WindowStartupLocation="Manual"
+        CanResize="False"
+        ShowActivated="True">
+
+  <Border Classes="windowRoot">
+    <DockPanel>
+      <!-- Search Input -->
+      <TextBox x:Name="SearchInput"
+               Classes="searchInput"
+               DockPanel.Dock="Top"
+               KeyDown="SearchInput_KeyDown"/>
+
+      <!-- Results List -->
+      <ListBox x:Name="ResultsList"
+               Classes="resultsList"
+               MaxHeight="400"
+               SelectionMode="Single">
+        <ListBox.ItemTemplate>
+          <DataTemplate DataType="m:ResultItem">
+            <Grid ColumnDefinitions="36,*,Auto" Margin="0,2">
+              <!-- Icon placeholder -->
+              <Border Grid.Column="0"
+                      Width="28" Height="28"
+                      CornerRadius="6"
+                      Background="#30FFFFFF"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center">
+                <TextBlock Text="{Binding Category[0]}"
+                           FontSize="13"
+                           FontWeight="Bold"
+                           Foreground="#FF6C9CFF"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+              </Border>
+
+              <!-- Title + Subtitle -->
+              <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <TextBlock Classes="itemTitle" Text="{Binding Title}"/>
+                <TextBlock Classes="itemSubtitle"
+                           Text="{Binding Subtitle}"
+                           TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+
+              <!-- Category badge -->
+              <TextBlock Grid.Column="2"
+                         Classes="itemCategory"
+                         Text="{Binding Category}"
+                         VerticalAlignment="Center"
+                         Margin="8,0,4,0"/>
+            </Grid>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+  </Border>
+</Window>

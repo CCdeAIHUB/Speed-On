@@ -5,6 +5,7 @@ pub use index::IndexService;
 use crate::domain::{CandidateResource, Recommendation, RecommendationRequest, ResourceKind};
 use crate::error::{AppError, AppResult};
 use crate::ports::ResourceRepository;
+use crate::search::score_recency;
 
 pub struct RecommendationService<R>
 where
@@ -64,22 +65,4 @@ pub fn rank_candidates(candidates: Vec<CandidateResource>, request: &Recommendat
     });
     recommendations.truncate(request.limit);
     recommendations
-}
-
-fn score_recency(age_millis: u64) -> u64 {
-    const HOUR: u64 = 60 * 60 * 1_000;
-    const DAY: u64 = 24 * HOUR;
-    const WEEK: u64 = 7 * DAY;
-    const MONTH: u64 = 30 * DAY;
-    if age_millis <= HOUR {
-        80
-    } else if age_millis <= DAY {
-        60
-    } else if age_millis <= WEEK {
-        40
-    } else if age_millis <= MONTH {
-        20
-    } else {
-        5
-    }
 }

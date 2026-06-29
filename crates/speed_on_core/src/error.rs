@@ -48,6 +48,15 @@ impl AppError {
         Self::new("CORE_PLATFORM_UNSUPPORTED", message, module, false)
     }
 
+    /// Platform command was recognized and attempted but failed at runtime.
+    ///
+    /// Unlike `platform_unsupported` (which means the platform cannot do this
+    /// at all), `platform_failure` means the platform *can* do it but the
+    /// command exited non-zero or similar. These errors are recoverable.
+    pub fn platform_failure(message: impl Into<String>, module: impl Into<String>) -> Self {
+        Self::new("CORE_PLATFORM_FAILURE", message, module, true)
+    }
+
     pub fn with_cause(mut self, cause: impl Into<String>) -> Self {
         self.cause = Some(cause.into());
         self

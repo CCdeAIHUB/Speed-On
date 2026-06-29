@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::domain::{IndexedResource, ResourceKind};
 use crate::error::{AppError, AppResult};
@@ -342,11 +343,11 @@ fn queries_are_similar(left: &str, right: &str) -> bool {
     if left == right {
         return true;
     }
-    let min_len = left.len().min(right.len());
+    let min_len = left.chars().count().min(right.chars().count());
     min_len >= 2 && (left.contains(right) || right.contains(left))
 }
 
-fn score_recency(age_millis: u64) -> u64 {
+pub(crate) fn score_recency(age_millis: u64) -> u64 {
     const HOUR: u64 = 60 * 60 * 1_000;
     const DAY: u64 = 24 * HOUR;
     const WEEK: u64 = 7 * DAY;
@@ -354,6 +355,13 @@ fn score_recency(age_millis: u64) -> u64 {
     if age_millis <= HOUR { 80 } else if age_millis <= DAY { 60 } else if age_millis <= WEEK { 40 } else if age_millis <= MONTH { 20 } else { 5 }
 }
 
+/// Global monotonic counter used to disambiguate log IDs generated within the
+/// same millisecond for the same normalized query.  Without this, two rapid
+/// searches with identical text would collide on the `user_search_logs`
+/// primary key and cause the second search to fail.
+static LOG_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
 fn build_log_id(prefix: &str, millis: u64, normalized_query: &str) -> String {
-    format!("{prefix}-{millis}-{normalized_query}")
+    let seq = LOG_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    format!("{prefix}-{millis}-{seq}-{normalized_query}")
 }

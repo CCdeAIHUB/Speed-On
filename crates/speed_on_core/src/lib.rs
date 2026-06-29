@@ -16,7 +16,7 @@ pub mod search;
 pub mod service;
 pub mod storage;
 
-pub use alias::{NoopPinyinAliasProvider, PinyinAliasProvider, PinyinAliases, SearchAliasBuilder};
+pub use alias::{DefaultPinyinAliasProvider, PinyinAliasProvider, PinyinAliases, SearchAliasBuilder};
 pub use api::{
     ApiErrorResponse, ApiOpenResourceRequest, ApiOpenResourceResponse,
     ApiRecommendationRequest, ApiRecommendationResponse, ApiRecommendationResult,
