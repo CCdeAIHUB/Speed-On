@@ -3,7 +3,10 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use speed_on_core::{CoreApi, IpcRequest, JsonIpcDispatcher, SqliteStore, IPC_PROTOCOL_VERSION};
+use speed_on_core::{
+    CoreApi, IpcRequest, JsonIpcDispatcher, JsonIpcDispatcherWithOpener, ResourceOpener,
+    SqliteStore, IPC_PROTOCOL_VERSION,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StdioTransportError {
@@ -137,6 +140,21 @@ where
     R: speed_on_core::ResourceRepository
         + speed_on_core::SearchIndexRepository
         + speed_on_core::UserOperationLogRepository,
+{
+    fn dispatch_request(&mut self, request: IpcRequest) -> Value {
+        match serde_json::to_value(self.dispatch(request)) {
+            Ok(value) => value,
+            Err(error) => malformed_envelope_error(format!("failed to encode dispatch response: {error}")),
+        }
+    }
+}
+
+impl<R, O> IpcDispatcher for JsonIpcDispatcherWithOpener<R, O>
+where
+    R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchIndexRepository
+        + speed_on_core::UserOperationLogRepository,
+    O: ResourceOpener,
 {
     fn dispatch_request(&mut self, request: IpcRequest) -> Value {
         match serde_json::to_value(self.dispatch(request)) {
