@@ -161,6 +161,20 @@ fn stdio_config_rejects_missing_database_path() {
 }
 
 #[test]
+fn stdio_config_rejects_missing_db_argument_value() {
+    // 场景：--db 后面必须是路径，不能把下一个 flag 当成数据库路径。
+    let result = StdioConfig::from_args_and_env(["--db", "--enable-command-opener"], None);
+
+    let error = match result {
+        Ok(_) => panic!("missing --db value should fail"),
+        Err(error) => error,
+    };
+
+    assert_eq!(error.error_code, "IPC_STDIO_INVALID_INPUT");
+    assert_eq!(error.module, "ipc_stdio::StdioConfig");
+}
+
+#[test]
 fn json_lines_transport_writes_one_response_per_request_line() {
     // 场景：stdio transport 使用一行请求对应一行响应，方便前端按行读取。
     let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"r1","command":"search","payload":{"query":"term","limit":5,"kinds":["application"],"now_millis":100}}
