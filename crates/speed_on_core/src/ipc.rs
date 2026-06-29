@@ -8,8 +8,8 @@ use crate::api::{
 };
 use crate::error::{AppError, AppResult};
 use crate::ports::{
-    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchIndexRepository,
-    UserOperationLogRepository,
+    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchAliasRepository,
+    SearchIndexRepository, UserOperationLogRepository,
 };
 
 pub const IPC_PROTOCOL_VERSION: &str = "speed-on-ipc-v1";
@@ -42,14 +42,14 @@ pub struct IpcResponse {
 
 pub struct JsonIpcDispatcher<R>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     api: CoreApi<R>,
 }
 
 impl<R> JsonIpcDispatcher<R>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     pub fn new(api: CoreApi<R>) -> Self {
         Self { api }
@@ -86,7 +86,7 @@ where
 
 pub struct JsonIpcDispatcherWithOpener<R, O>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     O: ResourceOpener,
 {
     api: CoreApi<R>,
@@ -95,7 +95,7 @@ where
 
 impl<R, O> JsonIpcDispatcherWithOpener<R, O>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     O: ResourceOpener,
 {
     pub fn new(api: CoreApi<R>, opener: O) -> Self {
@@ -136,7 +136,7 @@ where
 
 pub struct JsonIpcDispatcherWithScanner<R, S>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     S: InstalledApplicationScanner,
 {
     api: CoreApi<R>,
@@ -145,7 +145,7 @@ where
 
 impl<R, S> JsonIpcDispatcherWithScanner<R, S>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     S: InstalledApplicationScanner,
 {
     pub fn new(api: CoreApi<R>, scanner: S) -> Self {
@@ -186,7 +186,7 @@ where
 
 pub struct JsonIpcDispatcherWithScannerAndOpener<R, S, O>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     S: InstalledApplicationScanner,
     O: ResourceOpener,
 {
@@ -197,7 +197,7 @@ where
 
 impl<R, S, O> JsonIpcDispatcherWithScannerAndOpener<R, S, O>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
     S: InstalledApplicationScanner,
     O: ResourceOpener,
 {
@@ -251,7 +251,7 @@ fn build_response(request: &IpcRequest, response: ApiResponse<Value>) -> IpcResp
 
 fn dispatch_search<R>(api: &mut CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     match decode_payload::<ApiSearchRequest>(request.payload.clone(), module) {
         Ok(payload) => api_response_to_json(api.search(payload)),
@@ -261,7 +261,7 @@ where
 
 fn dispatch_recommend<R>(api: &CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     match decode_payload::<ApiRecommendationRequest>(request.payload.clone(), module) {
         Ok(payload) => api_response_to_json(api.recommend(payload)),
@@ -271,7 +271,7 @@ where
 
 fn dispatch_record_selection<R>(api: &mut CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     match decode_payload::<ApiRecordSelectionRequest>(request.payload.clone(), module) {
         Ok(payload) => api_response_to_json(api.record_selection(payload)),
