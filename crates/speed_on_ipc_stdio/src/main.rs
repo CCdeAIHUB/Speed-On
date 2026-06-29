@@ -1,7 +1,9 @@
 use std::env;
 use std::io::{self, BufReader};
 
-use speed_on_ipc_stdio::{open_default_dispatcher, run_json_lines_transport, StdioConfig};
+use speed_on_ipc_stdio::{
+    open_command_opener_dispatcher, open_default_dispatcher, run_json_lines_transport, StdioConfig,
+};
 
 fn main() {
     if let Err(error) = run() {
@@ -18,9 +20,14 @@ fn main() {
 
 fn run() -> speed_on_ipc_stdio::StdioResult<()> {
     let config = StdioConfig::from_args_and_env(env::args().skip(1), env::var("SPEED_ON_DB").ok())?;
-    let mut dispatcher = open_default_dispatcher(&config)?;
     let stdin = io::stdin();
     let stdout = io::stdout();
 
-    run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+    if config.enable_command_opener {
+        let mut dispatcher = open_command_opener_dispatcher(&config)?;
+        run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+    } else {
+        let mut dispatcher = open_default_dispatcher(&config)?;
+        run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+    }
 }
