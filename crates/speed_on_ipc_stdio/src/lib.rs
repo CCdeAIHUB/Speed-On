@@ -215,6 +215,7 @@ pub trait IpcDispatcher {
 impl<R> IpcDispatcher for JsonIpcDispatcher<R>
 where
     R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchAliasRepository
         + speed_on_core::SearchIndexRepository
         + speed_on_core::UserOperationLogRepository,
 {
@@ -226,6 +227,7 @@ where
 impl<R, O> IpcDispatcher for JsonIpcDispatcherWithOpener<R, O>
 where
     R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchAliasRepository
         + speed_on_core::SearchIndexRepository
         + speed_on_core::UserOperationLogRepository,
     O: ResourceOpener,
@@ -238,6 +240,7 @@ where
 impl<R, S> IpcDispatcher for JsonIpcDispatcherWithScanner<R, S>
 where
     R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchAliasRepository
         + speed_on_core::SearchIndexRepository
         + speed_on_core::UserOperationLogRepository,
     S: InstalledApplicationScanner,
@@ -250,6 +253,7 @@ where
 impl<R, S, O> IpcDispatcher for JsonIpcDispatcherWithScannerAndOpener<R, S, O>
 where
     R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchAliasRepository
         + speed_on_core::SearchIndexRepository
         + speed_on_core::UserOperationLogRepository,
     S: InstalledApplicationScanner,
