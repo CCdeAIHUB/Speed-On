@@ -337,7 +337,7 @@ Important behavior:
 - Scanning must go through an `InstalledApplicationScanner` platform adapter.
 - Dispatchers without a scanner must return `CORE_PLATFORM_UNSUPPORTED`.
 - Scanner results are upserted into `indexed_resources`, so subsequent search and recommendation calls can use them.
-- Search aliases are generated after the resource write. The first builder writes `title` and `target` aliases and provides a pinyin-provider extension point.
+- Search aliases are generated after the resource write. The builder writes `title`, `target`, `pinyin_full`, and `pinyin_initials` aliases when available.
 - The first platform scanner supports macOS `.app` bundles, Linux `.desktop` entries, and Windows `.lnk` / `.exe` files from configured roots.
 
 ## Privacy boundary
