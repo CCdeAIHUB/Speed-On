@@ -1,5 +1,6 @@
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -136,7 +137,7 @@ pub fn open_application_scanner_dispatcher(config: &StdioConfig) -> StdioResult<
     let store = open_store(config, "ipc_stdio::open_application_scanner_dispatcher")?;
     Ok(JsonIpcDispatcherWithScanner::new(
         CoreApi::new(store),
-        PlatformApplicationScanner::for_current_platform(0),
+        PlatformApplicationScanner::for_current_platform(current_millis()?),
     ))
 }
 
@@ -144,9 +145,19 @@ pub fn open_full_platform_dispatcher(config: &StdioConfig) -> StdioResult<FullPl
     let store = open_store(config, "ipc_stdio::open_full_platform_dispatcher")?;
     Ok(JsonIpcDispatcherWithScannerAndOpener::new(
         CoreApi::new(store),
-        PlatformApplicationScanner::for_current_platform(0),
+        PlatformApplicationScanner::for_current_platform(current_millis()?),
         CommandResourceOpener::default(),
     ))
+}
+
+fn current_millis() -> StdioResult<u64> {
+    let duration = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error| {
+        StdioTransportError::io_failure(
+            format!("failed to read system time: {error}"),
+            "ipc_stdio::current_millis",
+        )
+    })?;
+    Ok(duration.as_millis() as u64)
 }
 
 fn open_store(config: &StdioConfig, module: &'static str) -> StdioResult<SqliteStore> {
