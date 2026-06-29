@@ -2,7 +2,7 @@ use crate::domain::{
     ActivityRecord, CandidateResource, IndexedResource, OpenResourceOutcome, OpenResourceRequest,
     ResourceKind,
 };
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::logging::{SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 use crate::search::{SearchAlias, SearchCandidate};
 
@@ -92,6 +92,23 @@ where
         created_at_millis: u64,
     ) -> AppResult<()> {
         (**self).upsert_search_aliases(resource_id, aliases, created_at_millis)
+    }
+}
+
+impl<T> SearchAliasRepository for &T
+where
+    T: SearchAliasRepository,
+{
+    fn upsert_search_aliases(
+        &mut self,
+        _resource_id: &str,
+        _aliases: &[SearchAlias],
+        _created_at_millis: u64,
+    ) -> AppResult<()> {
+        Err(AppError::invalid_argument(
+            "cannot write search aliases through shared repository reference",
+            "ports::SearchAliasRepository",
+        ))
     }
 }
 
