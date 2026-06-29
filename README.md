@@ -40,6 +40,8 @@ The Rust core is responsible for:
 17. Allowing stdio IPC to opt into real command opening only through the explicit `--enable-command-opener` flag.
 18. Providing a first installed-application scanner adapter and `refresh_applications` API / IPC command.
 19. Allowing stdio IPC to opt into real application scanning only through the explicit `--enable-application-scan` flag.
+20. Generating first-pass search aliases after application refresh so scanned applications are immediately searchable.
+21. Maintaining a detailed IPC protocol reference with valid requests, success responses, failure responses, and failure reasons.
 
 ## Architecture rules
 
@@ -57,32 +59,36 @@ The backend follows the Codex stability and anti-corruption development skill us
 - Opening resources must go through a platform `ResourceOpener`; Core API and IPC must not directly invoke OS commands.
 - Resource openers must validate targets and URL schemes before invoking platform commands.
 - Application scanning must go through a platform `InstalledApplicationScanner`; Core API and IPC must not scan OS directories directly.
+- Search alias writes must go through `SearchAliasRepository`; Core must not depend on SQLite table details.
 - Real command opening and real application scanning must be opt-in for stdio IPC and must not be silently enabled by default.
 
 ## Current implementation stage
 
-Stage 10 completes the first application scanning path behind an explicit opt-in flag:
+Stage 11 completes first-pass alias generation and the full IPC protocol reference:
 
 - Rust workspace.
 - Domain models.
 - Repository and platform abstraction traits.
 - SQLite schema contract v2.
 - SQLite migration runner using `PRAGMA user_version`.
-- SQLite-backed resource repository, search index repository, user operation log repository, and system log sink.
+- SQLite-backed resource repository, search alias repository, search index repository, user operation log repository, and system log sink.
 - Recommendation service.
 - Search service with title, target, browser title, pinyin, pinyin-initial, and user-history ranking support.
 - User operation log and sanitized system log models.
 - Core API v1 DTOs and response envelope for search, recommend, record_selection, open_resource, and refresh_applications.
 - JSON IPC v1 envelope and dispatcher for search, recommend, record_selection, open_resource, and refresh_applications.
+- Detailed IPC protocol reference at `docs/ipc/protocol-v1.md`.
 - `speed-on-ipc-stdio` binary that reads one IPC request JSON per stdin line and writes one IPC response JSON per stdout line.
 - Optional `speed-on-ipc-stdio --enable-command-opener` mode for real command-based resource opening.
 - Optional `speed-on-ipc-stdio --enable-application-scan` mode for real installed application scanning.
 - `speed_on_platform` crate with target validation, URL scheme checks, platform command planning, injectable command runner, and installed application scanner.
-- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, refresh_applications contracts, stdio transport behavior, command opener opt-in, application scan opt-in, platform opener validation/planning, and platform application scanning.
+- `SearchAliasBuilder` that generates title/target aliases and provides a pinyin provider boundary for future full pinyin support.
+- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, refresh_applications contracts, alias builder behavior, stdio transport behavior, command opener opt-in, application scan opt-in, platform opener validation/planning, and platform application scanning.
 
-OS log listeners, browser-history readers, pinyin alias builders, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
+OS log listeners, browser-history readers, full pinyin alias providers, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
 
 ## API and IPC documentation
 
+- `docs/ipc/protocol-v1.md`: detailed IPC protocol reference with request/response/error examples.
 - `docs/api/core-api-v1.md`: frontend-facing Core API and JSON IPC envelope.
 - `docs/ipc/stdio-json-lines.md`: runnable stdio JSON Lines IPC transport.
