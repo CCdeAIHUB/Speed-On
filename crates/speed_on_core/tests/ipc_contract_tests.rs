@@ -1,8 +1,9 @@
 use serde_json::{json, Value};
 use speed_on_core::{
-    ApiErrorResponse, ApiResource, ApiResourceKind, CoreApi, IndexedResource, IpcCommand,
-    IpcRequest, JsonIpcDispatcher, ResourceKind, ResourceRepository, SearchAlias,
-    SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
+    ApiErrorResponse, ApiResource, ApiResourceKind, AppResult, CoreApi, IndexedResource,
+    IpcCommand, IpcRequest, JsonIpcDispatcher, JsonIpcDispatcherWithOpener,
+    OpenResourceOutcome, OpenResourceRequest, ResourceKind, ResourceOpener, ResourceRepository,
+    SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -42,7 +43,7 @@ fn resource() -> IndexedResource {
     }
 }
 
-fn dispatcher_with_terminal() -> JsonIpcDispatcher<SqliteStore> {
+fn store_with_terminal() -> SqliteStore {
     let mut store = ok(SqliteStore::open_in_memory_migrated());
     let indexed_resource = resource();
     ok(store.upsert_resources(&[indexed_resource]));
@@ -54,8 +55,24 @@ fn dispatcher_with_terminal() -> JsonIpcDispatcher<SqliteStore> {
         ],
         10,
     ));
+    store
+}
 
-    JsonIpcDispatcher::new(CoreApi::new(store))
+fn dispatcher_with_terminal() -> JsonIpcDispatcher<SqliteStore> {
+    JsonIpcDispatcher::new(CoreApi::new(store_with_terminal()))
+}
+
+struct MockOpener;
+
+impl ResourceOpener for MockOpener {
+    fn open_resource(&mut self, request: &OpenResourceRequest) -> AppResult<OpenResourceOutcome> {
+        Ok(OpenResourceOutcome {
+            resource_id: request.resource.id.clone(),
+            kind: request.resource.kind,
+            target: request.resource.target.clone(),
+            opened_at_millis: request.requested_at_millis,
+        })
+    }
 }
 
 #[test]
@@ -87,6 +104,22 @@ fn ipc_request_contract_uses_stable_json_envelope() {
             }
         })
     );
+}
+
+#[test]
+fn ipc_open_resource_command_uses_stable_snake_case_name() {
+    // 场景：打开资源命令必须在 IPC envelope 中稳定命名为 open_resource。
+    let request = IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-open".to_owned(),
+        command: IpcCommand::OpenResource,
+        payload: json!({
+            "resource": ApiResource::from(resource()),
+            "requested_at_millis": 300
+        }),
+    };
+
+    assert_eq!(to_json(&request)["command"], json!("open_resource"));
 }
 
 #[test]
@@ -154,6 +187,47 @@ fn ipc_dispatcher_executes_record_selection_command() {
     assert!(response.response.ok);
     let data = some(response.response.data);
     assert_eq!(data["recorded"], json!(true));
+}
+
+#[test]
+fn ipc_dispatcher_without_opener_rejects_open_resource() {
+    // 场景：没有平台 opener adapter 时，open_resource 不能假装成功，必须返回 unsupported。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-open".to_owned(),
+        command: IpcCommand::OpenResource,
+        payload: json!({
+            "resource": ApiResource::from(resource()),
+            "requested_at_millis": 300
+        }),
+    });
+
+    assert!(!response.response.ok);
+    let error = some(response.response.error);
+    assert_eq!(error.error_code, "CORE_PLATFORM_UNSUPPORTED");
+    assert_eq!(error.module, "ipc::JsonIpcDispatcher::open_resource");
+}
+
+#[test]
+fn ipc_dispatcher_with_opener_executes_open_resource() {
+    // 场景：带 ResourceOpener 的 dispatcher 可以真正把 open_resource 分发给平台边界。
+    let mut dispatcher = JsonIpcDispatcherWithOpener::new(CoreApi::new(store_with_terminal()), MockOpener);
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-open".to_owned(),
+        command: IpcCommand::OpenResource,
+        payload: json!({
+            "resource": ApiResource::from(resource()),
+            "requested_at_millis": 300
+        }),
+    });
+
+    assert!(response.response.ok);
+    let data = some(response.response.data);
+    assert_eq!(data["opened"], json!(true));
+    assert_eq!(data["resource_id"], json!("app-terminal"));
+    assert_eq!(data["opened_at_millis"], json!(300));
 }
 
 #[test]
