@@ -22,6 +22,22 @@ SPEED_ON_DB=./speed-on.db speed-on-ipc-stdio
 
 If no database path is provided, startup fails with a structured stderr error instead of silently creating a database in an unknown location.
 
+## Enabling real command opener
+
+By default, `open_resource` is disabled in the stdio binary. To enable the command-based opener, pass the explicit flag:
+
+```bash
+speed-on-ipc-stdio --db ./speed-on.db --enable-command-opener
+```
+
+This mode wires `JsonIpcDispatcherWithOpener` to `speed_on_platform::CommandResourceOpener`. The opener validates targets and browser URL schemes before invoking platform commands. The first command-based strategy is:
+
+- macOS: `open <target>`
+- Linux: `xdg-open <target>`
+- Windows: `explorer <target>`
+
+The command is executed through structured process arguments, not shell string concatenation.
+
 ## Request format
 
 Every stdin line must contain one complete `IpcRequest` JSON object.
@@ -49,13 +65,17 @@ Command payloads are the same as `docs/api/core-api-v1.md`.
 
 ## Open resource behavior
 
-The default `speed-on-ipc-stdio` binary currently has no platform `ResourceOpener` adapter. Therefore, an `open_resource` request returns `CORE_PLATFORM_UNSUPPORTED` rather than pretending to open the resource.
+Without `--enable-command-opener`, an `open_resource` request returns `CORE_PLATFORM_UNSUPPORTED` rather than pretending to open the resource.
 
 ```json
 {"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","response":{"ok":false,"data":null,"error":{"error_code":"CORE_PLATFORM_UNSUPPORTED","message":"open_resource requires a platform ResourceOpener adapter","module":"ipc::JsonIpcDispatcher::open_resource","recoverable":false,"suggestion":null,"trace_id":null}}}
 ```
 
-A future platform-specific transport or stdio mode can use `JsonIpcDispatcherWithOpener` to wire a real Windows/macOS/Linux opener implementation.
+With `--enable-command-opener`, successful `open_resource` responses include `activity_recorded: true` after Core writes the open action into activity/usage stats.
+
+```json
+{"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","response":{"ok":true,"data":{"api_version":"core-api-v1","opened":true,"activity_recorded":true,"resource_id":"app-terminal","kind":"application","target":"/apps/terminal","opened_at_millis":300},"error":null}}
+```
 
 ## Malformed request behavior
 
