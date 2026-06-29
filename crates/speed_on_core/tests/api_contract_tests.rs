@@ -276,27 +276,37 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
 }
 
 #[test]
-fn core_api_open_resource_uses_resource_opener_boundary() {
-    // 场景：Core API 可以打开资源，但实际平台动作必须通过 ResourceOpener 边界完成。
-    let store = ok(SqliteStore::open_in_memory_migrated());
-    let mut api = CoreApi::new(store);
+fn core_api_open_resource_uses_opener_and_records_activity_stats() {
+    // 场景：打开资源成功后必须写入 activity_records/resource_usage_stats，后续推荐才能学习这次打开。
+    let mut store = ok(SqliteStore::open_in_memory_migrated());
+    ok(store.upsert_resources(&[resource()]));
     let mut opener = RecordingOpener::new();
 
-    let response = api.open_resource_with(
-        &mut opener,
-        ApiOpenResourceRequest {
-            resource: ApiResource::from(resource()),
-            requested_at_millis: 300,
-        },
-    );
+    {
+        let mut api = CoreApi::new(&mut store);
+        let response = api.open_resource_with(
+            &mut opener,
+            ApiOpenResourceRequest {
+                resource: ApiResource::from(resource()),
+                requested_at_millis: 300,
+            },
+        );
 
-    assert!(response.ok);
+        assert!(response.ok);
+        let data = some(response.data);
+        assert!(data.opened);
+        assert!(data.activity_recorded);
+        assert_eq!(data.resource_id, "app-terminal");
+        assert_eq!(data.kind, ApiResourceKind::Application);
+        assert_eq!(data.opened_at_millis, 300);
+    }
+
     assert_eq!(opener.opened_count, 1);
-    let data = some(response.data);
-    assert!(data.opened);
-    assert_eq!(data.resource_id, "app-terminal");
-    assert_eq!(data.kind, ApiResourceKind::Application);
-    assert_eq!(data.opened_at_millis, 300);
+    let kinds = [ResourceKind::Application];
+    let candidates = ok(store.load_recommendation_candidates(Some(&kinds)));
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].open_count, 1);
+    assert_eq!(candidates[0].last_opened_at_millis, Some(300));
 }
 
 #[test]
