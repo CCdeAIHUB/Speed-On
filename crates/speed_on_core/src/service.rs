@@ -1,8 +1,9 @@
+use crate::alias::{NoopPinyinAliasProvider, SearchAliasBuilder};
 use crate::domain::{
     CandidateResource, IndexedResource, Recommendation, RecommendationRequest, ResourceKind,
 };
 use crate::error::{AppError, AppResult};
-use crate::ports::{InstalledApplicationScanner, ResourceRepository};
+use crate::ports::{InstalledApplicationScanner, ResourceRepository, SearchAliasRepository};
 
 pub struct IndexService<R, S>
 where
@@ -30,6 +31,30 @@ where
         let resources = self.scanner.scan_installed_applications()?;
         self.repository.upsert_resources(&resources)?;
         Ok(resources)
+    }
+}
+
+impl<R, S> IndexService<R, S>
+where
+    R: ResourceRepository + SearchAliasRepository,
+    S: InstalledApplicationScanner,
+{
+    pub fn refresh_installed_applications_with_aliases(
+        &mut self,
+        created_at_millis: u64,
+    ) -> AppResult<(usize, usize)> {
+        let resources = self.refresh_installed_application_resources()?;
+        let builder = SearchAliasBuilder::new(NoopPinyinAliasProvider);
+        let mut alias_count = 0;
+
+        for resource in &resources {
+            let aliases = builder.aliases_for_resource(resource);
+            alias_count += aliases.len();
+            self.repository
+                .upsert_search_aliases(&resource.id, &aliases, created_at_millis)?;
+        }
+
+        Ok((resources.len(), alias_count))
     }
 }
 
