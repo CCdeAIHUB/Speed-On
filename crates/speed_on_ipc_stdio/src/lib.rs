@@ -7,6 +7,10 @@ use speed_on_core::{
     CoreApi, IpcRequest, JsonIpcDispatcher, JsonIpcDispatcherWithOpener, ResourceOpener,
     SqliteStore, IPC_PROTOCOL_VERSION,
 };
+use speed_on_platform::{CommandResourceOpener, ProcessCommandRunner};
+
+pub type CommandOpenerDispatcher =
+    JsonIpcDispatcherWithOpener<SqliteStore, CommandResourceOpener<ProcessCommandRunner>>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StdioTransportError {
@@ -44,6 +48,7 @@ pub type StdioResult<T> = Result<T, StdioTransportError>;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StdioConfig {
     pub database_path: PathBuf,
+    pub enable_command_opener: bool,
 }
 
 impl StdioConfig {
@@ -54,11 +59,22 @@ impl StdioConfig {
     {
         let mut args = args.into_iter().map(Into::into);
         let mut database_path = None;
+        let mut enable_command_opener = false;
 
         while let Some(arg) = args.next() {
-            if arg == "--db" {
-                database_path = args.next();
-                break;
+            match arg.as_str() {
+                "--db" => {
+                    database_path = args.next();
+                }
+                "--enable-command-opener" => {
+                    enable_command_opener = true;
+                }
+                _ => {
+                    return Err(StdioTransportError::invalid_input(
+                        format!("unknown argument: {arg}"),
+                        "ipc_stdio::StdioConfig",
+                    ));
+                }
             }
         }
 
@@ -74,19 +90,28 @@ impl StdioConfig {
 
         Ok(Self {
             database_path: PathBuf::from(database_path),
+            enable_command_opener,
         })
     }
 }
 
 pub fn open_default_dispatcher(config: &StdioConfig) -> StdioResult<JsonIpcDispatcher<SqliteStore>> {
-    let store = SqliteStore::open_migrated(&config.database_path).map_err(|error| {
-        StdioTransportError::io_failure(
-            format!("failed to open sqlite database: {error}"),
-            "ipc_stdio::open_default_dispatcher",
-        )
-    })?;
-
+    let store = open_store(config, "ipc_stdio::open_default_dispatcher")?;
     Ok(JsonIpcDispatcher::new(CoreApi::new(store)))
+}
+
+pub fn open_command_opener_dispatcher(config: &StdioConfig) -> StdioResult<CommandOpenerDispatcher> {
+    let store = open_store(config, "ipc_stdio::open_command_opener_dispatcher")?;
+    Ok(JsonIpcDispatcherWithOpener::new(
+        CoreApi::new(store),
+        CommandResourceOpener::default(),
+    ))
+}
+
+fn open_store(config: &StdioConfig, module: &'static str) -> StdioResult<SqliteStore> {
+    SqliteStore::open_migrated(&config.database_path).map_err(|error| {
+        StdioTransportError::io_failure(format!("failed to open sqlite database: {error}"), module)
+    })
 }
 
 pub fn run_json_lines_transport<R, W, D>(reader: R, mut writer: W, dispatcher: &mut D) -> StdioResult<()>
