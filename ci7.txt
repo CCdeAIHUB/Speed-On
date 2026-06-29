@@ -1,0 +1,38 @@
+﻿Format, lint, and test	Run tests	﻿2026-06-29T08:03:50.6177323Z ##[group]Run cargo test --workspace
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6177681Z ^[[36;1mcargo test --workspace^[[0m
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6207848Z shell: /usr/bin/bash -e {0}
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6208375Z env:
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6208700Z   CARGO_HOME: /home/runner/.cargo
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6208987Z   CARGO_INCREMENTAL: 0
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6209209Z   CARGO_TERM_COLOR: always
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6209428Z ##[endgroup]
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6887288Z ^[[1m^[[92m   Compiling^[[0m foldhash v0.2.0
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6888440Z ^[[1m^[[92m   Compiling^[[0m serde_core v1.0.228
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6908631Z ^[[1m^[[92m   Compiling^[[0m zmij v1.0.21
+Format, lint, and test	Run tests	2026-06-29T08:03:50.6909507Z ^[[1m^[[92m   Compiling^[[0m libsqlite3-sys v0.38.1
+Format, lint, and test	Run tests	2026-06-29T08:03:50.8145523Z ^[[1m^[[92m   Compiling^[[0m hashbrown v0.17.1
+Format, lint, and test	Run tests	2026-06-29T08:03:50.8489090Z ^[[1m^[[92m   Compiling^[[0m fallible-streaming-iterator v0.1.9
+Format, lint, and test	Run tests	2026-06-29T08:03:50.9457998Z ^[[1m^[[92m   Compiling^[[0m itoa v1.0.18
+Format, lint, and test	Run tests	2026-06-29T08:03:51.0229592Z ^[[1m^[[92m   Compiling^[[0m bitflags v2.13.0
+Format, lint, and test	Run tests	2026-06-29T08:03:51.1026390Z ^[[1m^[[92m   Compiling^[[0m fallible-iterator v0.3.0
+Format, lint, and test	Run tests	2026-06-29T08:03:51.1929406Z ^[[1m^[[92m   Compiling^[[0m smallvec v1.15.2
+Format, lint, and test	Run tests	2026-06-29T08:03:51.3638562Z ^[[1m^[[92m   Compiling^[[0m memchr v2.8.2
+Format, lint, and test	Run tests	2026-06-29T08:03:51.4000511Z ^[[1m^[[92m   Compiling^[[0m hashlink v0.12.0
+Format, lint, and test	Run tests	2026-06-29T08:03:51.4047796Z ^[[1m^[[92m   Compiling^[[0m pinyin v0.11.0
+Format, lint, and test	Run tests	2026-06-29T08:03:51.6722560Z ^[[1m^[[92m   Compiling^[[0m rusqlite v0.40.1
+Format, lint, and test	Run tests	2026-06-29T08:03:52.6269793Z ^[[1m^[[92m   Compiling^[[0m serde_json v1.0.150
+Format, lint, and test	Run tests	2026-06-29T08:03:52.6271217Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.228
+Format, lint, and test	Run tests	2026-06-29T08:03:53.1716858Z ^[[1m^[[92m   Compiling^[[0m speed_on_core v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_core)
+Format, lint, and test	Run tests	2026-06-29T08:03:53.7604725Z ^[[1m^[[92m   Compiling^[[0m speed_on_platform v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_platform)
+Format, lint, and test	Run tests	2026-06-29T08:03:53.9006093Z ^[[1m^[[92m   Compiling^[[0m speed_on_ipc_stdio v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_ipc_stdio)
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2539689Z ^[[1m^[[91merror^[[0m^[[1m: this arithmetic operation will overflow^[[0m
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2569466Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_core/tests/recommendation_service_tests.rs:139:22
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2599246Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2600189Z ^[[1m^[[94m139^[[0m ^[[1m^[[94m|^[[0m                 Some(now - 40 * 24 * 60 * 60 * 1_000),
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2602473Z     ^[[1m^[[94m|^[[0m                      ^[[1m^[[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[91mattempt to compute `1000000000_u64 - 3456000000_u64`, which would overflow^[[0m
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2603669Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2604455Z     ^[[1m^[[94m= ^[[0m^[[1mnote^[[0m: `#[deny(arithmetic_overflow)]` on by default
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2605064Z 
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2713556Z ^[[1m^[[91merror^[[0m: could not compile `speed_on_core` (test "recommendation_service_tests") due to 1 previous error
+Format, lint, and test	Run tests	2026-06-29T08:03:55.2727020Z ^[[1m^[[33mwarning^[[0m: build failed, waiting for other jobs to finish...
+Format, lint, and test	Run tests	2026-06-29T08:03:55.6904922Z ##[error]Process completed with exit code 101.
