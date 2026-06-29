@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::api::{
-    ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecordSelectionRequest, ApiResponse,
-    ApiSearchRequest, CoreApi,
+    ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecordSelectionRequest,
+    ApiRefreshApplicationsRequest, ApiResponse, ApiSearchRequest, CoreApi,
 };
 use crate::error::{AppError, AppResult};
 use crate::ports::{
-    ResourceOpener, ResourceRepository, SearchIndexRepository, UserOperationLogRepository,
+    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchIndexRepository,
+    UserOperationLogRepository,
 };
 
 pub const IPC_PROTOCOL_VERSION: &str = "speed-on-ipc-v1";
@@ -20,6 +21,7 @@ pub enum IpcCommand {
     Recommend,
     RecordSelection,
     OpenResource,
+    RefreshApplications,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -54,13 +56,7 @@ where
     }
 
     pub fn dispatch(&mut self, request: IpcRequest) -> IpcResponse {
-        let response = self.dispatch_inner(&request);
-        IpcResponse {
-            protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
-            request_id: request.request_id,
-            command: request.command,
-            response,
-        }
+        build_response(&request, self.dispatch_inner(&request))
     }
 
     fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
@@ -69,30 +65,20 @@ where
         }
 
         match request.command {
-            IpcCommand::Search => match decode_payload::<ApiSearchRequest>(
-                request.payload.clone(),
-                "ipc::JsonIpcDispatcher::search",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.search(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
-            IpcCommand::Recommend => match decode_payload::<ApiRecommendationRequest>(
-                request.payload.clone(),
-                "ipc::JsonIpcDispatcher::recommend",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.recommend(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
-            IpcCommand::RecordSelection => match decode_payload::<ApiRecordSelectionRequest>(
-                request.payload.clone(),
+            IpcCommand::Search => dispatch_search(&mut self.api, request, "ipc::JsonIpcDispatcher::search"),
+            IpcCommand::Recommend => dispatch_recommend(&self.api, request, "ipc::JsonIpcDispatcher::recommend"),
+            IpcCommand::RecordSelection => dispatch_record_selection(
+                &mut self.api,
+                request,
                 "ipc::JsonIpcDispatcher::record_selection",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.record_selection(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
+            ),
             IpcCommand::OpenResource => ApiResponse::failure(AppError::platform_unsupported(
                 "open_resource requires a platform ResourceOpener adapter",
                 "ipc::JsonIpcDispatcher::open_resource",
+            )),
+            IpcCommand::RefreshApplications => ApiResponse::failure(AppError::platform_unsupported(
+                "refresh_applications requires a platform InstalledApplicationScanner adapter",
+                "ipc::JsonIpcDispatcher::refresh_applications",
             )),
         }
     }
@@ -117,13 +103,7 @@ where
     }
 
     pub fn dispatch(&mut self, request: IpcRequest) -> IpcResponse {
-        let response = self.dispatch_inner(&request);
-        IpcResponse {
-            protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
-            request_id: request.request_id,
-            command: request.command,
-            response,
-        }
+        build_response(&request, self.dispatch_inner(&request))
     }
 
     fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
@@ -132,27 +112,13 @@ where
         }
 
         match request.command {
-            IpcCommand::Search => match decode_payload::<ApiSearchRequest>(
-                request.payload.clone(),
-                "ipc::JsonIpcDispatcherWithOpener::search",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.search(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
-            IpcCommand::Recommend => match decode_payload::<ApiRecommendationRequest>(
-                request.payload.clone(),
-                "ipc::JsonIpcDispatcherWithOpener::recommend",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.recommend(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
-            IpcCommand::RecordSelection => match decode_payload::<ApiRecordSelectionRequest>(
-                request.payload.clone(),
+            IpcCommand::Search => dispatch_search(&mut self.api, request, "ipc::JsonIpcDispatcherWithOpener::search"),
+            IpcCommand::Recommend => dispatch_recommend(&self.api, request, "ipc::JsonIpcDispatcherWithOpener::recommend"),
+            IpcCommand::RecordSelection => dispatch_record_selection(
+                &mut self.api,
+                request,
                 "ipc::JsonIpcDispatcherWithOpener::record_selection",
-            ) {
-                Ok(payload) => api_response_to_json(self.api.record_selection(payload)),
-                Err(error) => ApiResponse::failure(error),
-            },
+            ),
             IpcCommand::OpenResource => match decode_payload::<ApiOpenResourceRequest>(
                 request.payload.clone(),
                 "ipc::JsonIpcDispatcherWithOpener::open_resource",
@@ -160,7 +126,156 @@ where
                 Ok(payload) => api_response_to_json(self.api.open_resource_with(&mut self.opener, payload)),
                 Err(error) => ApiResponse::failure(error),
             },
+            IpcCommand::RefreshApplications => ApiResponse::failure(AppError::platform_unsupported(
+                "refresh_applications requires a platform InstalledApplicationScanner adapter",
+                "ipc::JsonIpcDispatcherWithOpener::refresh_applications",
+            )),
         }
+    }
+}
+
+pub struct JsonIpcDispatcherWithScanner<R, S>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+{
+    api: CoreApi<R>,
+    scanner: S,
+}
+
+impl<R, S> JsonIpcDispatcherWithScanner<R, S>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+{
+    pub fn new(api: CoreApi<R>, scanner: S) -> Self {
+        Self { api, scanner }
+    }
+
+    pub fn dispatch(&mut self, request: IpcRequest) -> IpcResponse {
+        build_response(&request, self.dispatch_inner(&request))
+    }
+
+    fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
+        if let Some(error) = validate_request(request) {
+            return ApiResponse::failure(error);
+        }
+
+        match request.command {
+            IpcCommand::Search => dispatch_search(&mut self.api, request, "ipc::JsonIpcDispatcherWithScanner::search"),
+            IpcCommand::Recommend => dispatch_recommend(&self.api, request, "ipc::JsonIpcDispatcherWithScanner::recommend"),
+            IpcCommand::RecordSelection => dispatch_record_selection(
+                &mut self.api,
+                request,
+                "ipc::JsonIpcDispatcherWithScanner::record_selection",
+            ),
+            IpcCommand::OpenResource => ApiResponse::failure(AppError::platform_unsupported(
+                "open_resource requires a platform ResourceOpener adapter",
+                "ipc::JsonIpcDispatcherWithScanner::open_resource",
+            )),
+            IpcCommand::RefreshApplications => match decode_payload::<ApiRefreshApplicationsRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithScanner::refresh_applications",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.refresh_applications_with(&self.scanner, payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+        }
+    }
+}
+
+pub struct JsonIpcDispatcherWithScannerAndOpener<R, S, O>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+    O: ResourceOpener,
+{
+    api: CoreApi<R>,
+    scanner: S,
+    opener: O,
+}
+
+impl<R, S, O> JsonIpcDispatcherWithScannerAndOpener<R, S, O>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+    O: ResourceOpener,
+{
+    pub fn new(api: CoreApi<R>, scanner: S, opener: O) -> Self {
+        Self { api, scanner, opener }
+    }
+
+    pub fn dispatch(&mut self, request: IpcRequest) -> IpcResponse {
+        build_response(&request, self.dispatch_inner(&request))
+    }
+
+    fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
+        if let Some(error) = validate_request(request) {
+            return ApiResponse::failure(error);
+        }
+
+        match request.command {
+            IpcCommand::Search => dispatch_search(&mut self.api, request, "ipc::JsonIpcDispatcherWithScannerAndOpener::search"),
+            IpcCommand::Recommend => dispatch_recommend(&self.api, request, "ipc::JsonIpcDispatcherWithScannerAndOpener::recommend"),
+            IpcCommand::RecordSelection => dispatch_record_selection(
+                &mut self.api,
+                request,
+                "ipc::JsonIpcDispatcherWithScannerAndOpener::record_selection",
+            ),
+            IpcCommand::OpenResource => match decode_payload::<ApiOpenResourceRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithScannerAndOpener::open_resource",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.open_resource_with(&mut self.opener, payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+            IpcCommand::RefreshApplications => match decode_payload::<ApiRefreshApplicationsRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithScannerAndOpener::refresh_applications",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.refresh_applications_with(&self.scanner, payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+        }
+    }
+}
+
+fn build_response(request: &IpcRequest, response: ApiResponse<Value>) -> IpcResponse {
+    IpcResponse {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: request.request_id.clone(),
+        command: request.command,
+        response,
+    }
+}
+
+fn dispatch_search<R>(api: &mut CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+{
+    match decode_payload::<ApiSearchRequest>(request.payload.clone(), module) {
+        Ok(payload) => api_response_to_json(api.search(payload)),
+        Err(error) => ApiResponse::failure(error),
+    }
+}
+
+fn dispatch_recommend<R>(api: &CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+{
+    match decode_payload::<ApiRecommendationRequest>(request.payload.clone(), module) {
+        Ok(payload) => api_response_to_json(api.recommend(payload)),
+        Err(error) => ApiResponse::failure(error),
+    }
+}
+
+fn dispatch_record_selection<R>(api: &mut CoreApi<R>, request: &IpcRequest, module: &'static str) -> ApiResponse<Value>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+{
+    match decode_payload::<ApiRecordSelectionRequest>(request.payload.clone(), module) {
+        Ok(payload) => api_response_to_json(api.record_selection(payload)),
+        Err(error) => ApiResponse::failure(error),
     }
 }
 
