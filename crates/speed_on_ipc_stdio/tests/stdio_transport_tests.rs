@@ -2,8 +2,9 @@ use std::io::Cursor;
 
 use serde_json::{json, Value};
 use speed_on_core::{
-    AppResult, CoreApi, IndexedResource, IpcRequest, JsonIpcDispatcherWithOpener, ResourceKind,
-    ResourceRepository, SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
+    AppResult, CoreApi, IndexedResource, InstalledApplicationScanner, IpcRequest,
+    JsonIpcDispatcherWithOpener, JsonIpcDispatcherWithScanner, ResourceKind, ResourceRepository,
+    SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
 };
 use speed_on_ipc_stdio::{run_json_lines_transport, IpcDispatcher, StdioConfig};
 use speed_on_platform::{CommandPlan, CommandResourceOpener, CommandRunner};
@@ -44,6 +45,19 @@ fn resource() -> IndexedResource {
     }
 }
 
+fn scanned_resource() -> IndexedResource {
+    IndexedResource {
+        id: "app-notes".to_owned(),
+        kind: ResourceKind::Application,
+        title: "Notes".to_owned(),
+        target: "/apps/notes".to_owned(),
+        icon_path: Some("notes.png".to_owned()),
+        source: "mock_scanner".to_owned(),
+        first_seen_at_millis: 10,
+        last_seen_at_millis: 10,
+    }
+}
+
 fn store_with_terminal() -> SqliteStore {
     let mut store = ok(SqliteStore::open_in_memory_migrated());
     ok(store.upsert_resources(&[resource()]));
@@ -79,6 +93,18 @@ fn command_opener_dispatcher(
     )
 }
 
+struct MockScanner;
+
+impl InstalledApplicationScanner for MockScanner {
+    fn scan_installed_applications(&self) -> AppResult<Vec<IndexedResource>> {
+        Ok(vec![scanned_resource()])
+    }
+}
+
+fn scanner_dispatcher() -> JsonIpcDispatcherWithScanner<SqliteStore, MockScanner> {
+    JsonIpcDispatcherWithScanner::new(CoreApi::new(store_with_terminal()), MockScanner)
+}
+
 struct EchoDispatcher;
 
 impl IpcDispatcher for EchoDispatcher {
@@ -106,6 +132,7 @@ fn stdio_config_reads_database_path_from_db_arg() {
 
     assert_eq!(config.database_path.to_string_lossy(), "speed-on.db");
     assert!(!config.enable_command_opener);
+    assert!(!config.enable_application_scan);
 }
 
 #[test]
@@ -118,6 +145,7 @@ fn stdio_config_uses_environment_database_path_when_arg_is_missing() {
 
     assert_eq!(config.database_path.to_string_lossy(), "env-speed-on.db");
     assert!(!config.enable_command_opener);
+    assert!(!config.enable_application_scan);
 }
 
 #[test]
@@ -129,6 +157,37 @@ fn stdio_config_requires_explicit_flag_to_enable_command_opener() {
     ));
 
     assert_eq!(config.database_path.to_string_lossy(), "speed-on.db");
+    assert!(config.enable_command_opener);
+    assert!(!config.enable_application_scan);
+}
+
+#[test]
+fn stdio_config_requires_explicit_flag_to_enable_application_scan() {
+    // 场景：真实平台应用扫描默认关闭，必须显式传 --enable-application-scan 才允许接入。
+    let config = ok(StdioConfig::from_args_and_env(
+        ["--enable-application-scan", "--db", "speed-on.db"],
+        None,
+    ));
+
+    assert_eq!(config.database_path.to_string_lossy(), "speed-on.db");
+    assert!(!config.enable_command_opener);
+    assert!(config.enable_application_scan);
+}
+
+#[test]
+fn stdio_config_can_enable_scan_and_opener_together() {
+    // 场景：前端调试时可以同时启用应用扫描和打开资源两个平台能力。
+    let config = ok(StdioConfig::from_args_and_env(
+        [
+            "--enable-application-scan",
+            "--enable-command-opener",
+            "--db",
+            "speed-on.db",
+        ],
+        None,
+    ));
+
+    assert!(config.enable_application_scan);
     assert!(config.enable_command_opener);
 }
 
@@ -281,4 +340,39 @@ fn json_lines_transport_can_drive_open_resource_when_command_opener_is_enabled()
     assert_eq!(response["response"]["ok"], json!(true));
     assert_eq!(response["response"]["data"]["opened"], json!(true));
     assert_eq!(response["response"]["data"]["activity_recorded"], json!(true));
+}
+
+#[test]
+fn json_lines_transport_reports_refresh_applications_unsupported_when_scan_is_disabled() {
+    // 场景：stdio binary 默认没有真实应用 scanner，refresh_applications 必须返回 unsupported。
+    let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"refresh-1","command":"refresh_applications","payload":{"requested_at_millis":400}}
+"#;
+    let mut output = Vec::new();
+    let mut dispatcher = real_dispatcher();
+
+    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+
+    let response = parse_json_line(&output);
+    assert_eq!(response["request_id"], json!("refresh-1"));
+    assert_eq!(response["response"]["ok"], json!(false));
+    assert_eq!(
+        response["response"]["error"]["error_code"],
+        json!("CORE_PLATFORM_UNSUPPORTED")
+    );
+}
+
+#[test]
+fn json_lines_transport_can_drive_refresh_applications_when_scan_is_enabled() {
+    // 场景：显式接入 scanner 后，refresh_applications 可通过 stdio transport 写入应用索引。
+    let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"refresh-1","command":"refresh_applications","payload":{"requested_at_millis":400}}
+"#;
+    let mut output = Vec::new();
+    let mut dispatcher = scanner_dispatcher();
+
+    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+
+    let response = parse_json_line(&output);
+    assert_eq!(response["request_id"], json!("refresh-1"));
+    assert_eq!(response["response"]["ok"], json!(true));
+    assert_eq!(response["response"]["data"]["scanned_count"], json!(1));
 }
