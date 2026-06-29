@@ -40,7 +40,7 @@ The Rust core is responsible for:
 17. Allowing stdio IPC to opt into real command opening only through the explicit `--enable-command-opener` flag.
 18. Providing a first installed-application scanner adapter and `refresh_applications` API / IPC command.
 19. Allowing stdio IPC to opt into real application scanning only through the explicit `--enable-application-scan` flag.
-20. Generating first-pass search aliases after application refresh so scanned applications are immediately searchable.
+20. Generating title, target, full pinyin, and pinyin-initial search aliases after application refresh so scanned applications are immediately searchable.
 21. Maintaining a detailed IPC protocol reference with valid requests, success responses, failure responses, and failure reasons.
 
 ## Architecture rules
@@ -60,11 +60,12 @@ The backend follows the Codex stability and anti-corruption development skill us
 - Resource openers must validate targets and URL schemes before invoking platform commands.
 - Application scanning must go through a platform `InstalledApplicationScanner`; Core API and IPC must not scan OS directories directly.
 - Search alias writes must go through `SearchAliasRepository`; Core must not depend on SQLite table details.
+- Pinyin conversion must stay behind `PinyinAliasProvider` so it can be replaced or enhanced without rewriting search ranking.
 - Real command opening and real application scanning must be opt-in for stdio IPC and must not be silently enabled by default.
 
 ## Current implementation stage
 
-Stage 11 completes first-pass alias generation and the full IPC protocol reference:
+Stage 12 completes real pinyin alias provider integration and the service borrow-boundary cleanup:
 
 - Rust workspace.
 - Domain models.
@@ -82,10 +83,11 @@ Stage 11 completes first-pass alias generation and the full IPC protocol referen
 - Optional `speed-on-ipc-stdio --enable-command-opener` mode for real command-based resource opening.
 - Optional `speed-on-ipc-stdio --enable-application-scan` mode for real installed application scanning.
 - `speed_on_platform` crate with target validation, URL scheme checks, platform command planning, injectable command runner, and installed application scanner.
-- `SearchAliasBuilder` that generates title/target aliases and provides a pinyin provider boundary for future full pinyin support.
+- `SearchAliasBuilder` that generates title/target aliases and uses `PinyinCrateAliasProvider` for full pinyin and pinyin-initial aliases.
+- `IndexService` split into `service/index.rs`, with refreshed resources returned through a consuming method so `CoreApi` can write aliases without a repository borrow conflict.
 - TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, refresh_applications contracts, alias builder behavior, stdio transport behavior, command opener opt-in, application scan opt-in, platform opener validation/planning, and platform application scanning.
 
-OS log listeners, browser-history readers, full pinyin alias providers, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
+OS log listeners, browser-history readers, multi-pronunciation pinyin improvements, native Named Pipe / Unix Socket transports, direct Windows/macOS/Linux opener implementations, and native frontend bindings will be added in later stages.
 
 ## API and IPC documentation
 
