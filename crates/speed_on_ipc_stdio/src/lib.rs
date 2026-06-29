@@ -4,13 +4,21 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use speed_on_core::{
-    CoreApi, IpcRequest, JsonIpcDispatcher, JsonIpcDispatcherWithOpener, ResourceOpener,
-    SqliteStore, IPC_PROTOCOL_VERSION,
+    CoreApi, InstalledApplicationScanner, IpcRequest, JsonIpcDispatcher,
+    JsonIpcDispatcherWithOpener, JsonIpcDispatcherWithScanner,
+    JsonIpcDispatcherWithScannerAndOpener, ResourceOpener, SqliteStore, IPC_PROTOCOL_VERSION,
 };
-use speed_on_platform::{CommandResourceOpener, ProcessCommandRunner};
+use speed_on_platform::{CommandResourceOpener, PlatformApplicationScanner, ProcessCommandRunner};
 
 pub type CommandOpenerDispatcher =
     JsonIpcDispatcherWithOpener<SqliteStore, CommandResourceOpener<ProcessCommandRunner>>;
+pub type ApplicationScannerDispatcher =
+    JsonIpcDispatcherWithScanner<SqliteStore, PlatformApplicationScanner>;
+pub type FullPlatformDispatcher = JsonIpcDispatcherWithScannerAndOpener<
+    SqliteStore,
+    PlatformApplicationScanner,
+    CommandResourceOpener<ProcessCommandRunner>,
+>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct StdioTransportError {
@@ -49,6 +57,7 @@ pub type StdioResult<T> = Result<T, StdioTransportError>;
 pub struct StdioConfig {
     pub database_path: PathBuf,
     pub enable_command_opener: bool,
+    pub enable_application_scan: bool,
 }
 
 impl StdioConfig {
@@ -60,6 +69,7 @@ impl StdioConfig {
         let mut args = args.into_iter().map(Into::into);
         let mut database_path = None;
         let mut enable_command_opener = false;
+        let mut enable_application_scan = false;
 
         while let Some(arg) = args.next() {
             match arg.as_str() {
@@ -68,6 +78,9 @@ impl StdioConfig {
                 }
                 "--enable-command-opener" => {
                     enable_command_opener = true;
+                }
+                "--enable-application-scan" => {
+                    enable_application_scan = true;
                 }
                 _ => {
                     return Err(StdioTransportError::invalid_input(
@@ -91,6 +104,7 @@ impl StdioConfig {
         Ok(Self {
             database_path: PathBuf::from(database_path),
             enable_command_opener,
+            enable_application_scan,
         })
     }
 }
@@ -114,6 +128,23 @@ pub fn open_command_opener_dispatcher(config: &StdioConfig) -> StdioResult<Comma
     let store = open_store(config, "ipc_stdio::open_command_opener_dispatcher")?;
     Ok(JsonIpcDispatcherWithOpener::new(
         CoreApi::new(store),
+        CommandResourceOpener::default(),
+    ))
+}
+
+pub fn open_application_scanner_dispatcher(config: &StdioConfig) -> StdioResult<ApplicationScannerDispatcher> {
+    let store = open_store(config, "ipc_stdio::open_application_scanner_dispatcher")?;
+    Ok(JsonIpcDispatcherWithScanner::new(
+        CoreApi::new(store),
+        PlatformApplicationScanner::for_current_platform(0),
+    ))
+}
+
+pub fn open_full_platform_dispatcher(config: &StdioConfig) -> StdioResult<FullPlatformDispatcher> {
+    let store = open_store(config, "ipc_stdio::open_full_platform_dispatcher")?;
+    Ok(JsonIpcDispatcherWithScannerAndOpener::new(
+        CoreApi::new(store),
+        PlatformApplicationScanner::for_current_platform(0),
         CommandResourceOpener::default(),
     ))
 }
@@ -177,10 +208,7 @@ where
         + speed_on_core::UserOperationLogRepository,
 {
     fn dispatch_request(&mut self, request: IpcRequest) -> Value {
-        match serde_json::to_value(self.dispatch(request)) {
-            Ok(value) => value,
-            Err(error) => malformed_envelope_error(format!("failed to encode dispatch response: {error}")),
-        }
+        dispatch_to_value(self.dispatch(request))
     }
 }
 
@@ -192,10 +220,42 @@ where
     O: ResourceOpener,
 {
     fn dispatch_request(&mut self, request: IpcRequest) -> Value {
-        match serde_json::to_value(self.dispatch(request)) {
-            Ok(value) => value,
-            Err(error) => malformed_envelope_error(format!("failed to encode dispatch response: {error}")),
-        }
+        dispatch_to_value(self.dispatch(request))
+    }
+}
+
+impl<R, S> IpcDispatcher for JsonIpcDispatcherWithScanner<R, S>
+where
+    R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchIndexRepository
+        + speed_on_core::UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+{
+    fn dispatch_request(&mut self, request: IpcRequest) -> Value {
+        dispatch_to_value(self.dispatch(request))
+    }
+}
+
+impl<R, S, O> IpcDispatcher for JsonIpcDispatcherWithScannerAndOpener<R, S, O>
+where
+    R: speed_on_core::ResourceRepository
+        + speed_on_core::SearchIndexRepository
+        + speed_on_core::UserOperationLogRepository,
+    S: InstalledApplicationScanner,
+    O: ResourceOpener,
+{
+    fn dispatch_request(&mut self, request: IpcRequest) -> Value {
+        dispatch_to_value(self.dispatch(request))
+    }
+}
+
+fn dispatch_to_value<T>(response: T) -> Value
+where
+    T: serde::Serialize,
+{
+    match serde_json::to_value(response) {
+        Ok(value) => value,
+        Err(error) => malformed_envelope_error(format!("failed to encode dispatch response: {error}")),
     }
 }
 
