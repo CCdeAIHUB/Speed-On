@@ -1,4 +1,6 @@
-use crate::domain::{CandidateResource, Recommendation, RecommendationRequest, ResourceKind};
+use crate::domain::{
+    CandidateResource, IndexedResource, Recommendation, RecommendationRequest, ResourceKind,
+};
 use crate::error::{AppError, AppResult};
 use crate::ports::{InstalledApplicationScanner, ResourceRepository};
 
@@ -21,10 +23,13 @@ where
     }
 
     pub fn refresh_installed_applications(&mut self) -> AppResult<usize> {
+        Ok(self.refresh_installed_application_resources()?.len())
+    }
+
+    pub fn refresh_installed_application_resources(&mut self) -> AppResult<Vec<IndexedResource>> {
         let resources = self.scanner.scan_installed_applications()?;
-        let count = resources.len();
         self.repository.upsert_resources(&resources)?;
-        Ok(count)
+        Ok(resources)
     }
 }
 
