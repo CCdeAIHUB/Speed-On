@@ -5,7 +5,7 @@ use crate::error::{AppError, AppResult};
 use crate::logging::{UserSearchLogEntry, UserSelectionLogEntry};
 use crate::ports::{SearchIndexRepository, UserOperationLogRepository};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SearchAliasKind {
     Title,
     Target,
@@ -389,45 +389,66 @@ fn score_alias(alias: &SearchAlias, normalized_query: &str) -> Option<CandidateS
         SearchAliasKind::Target => 450,
         SearchAliasKind::Custom => 400,
     };
-    let match_kind = match alias.kind {
-        SearchAliasKind::Title => SearchMatchKind::Title,
-        SearchAliasKind::Target => SearchMatchKind::Target,
-        SearchAliasKind::BrowserTitle => SearchMatchKind::BrowserTitle,
-        SearchAliasKind::PinyinFull => SearchMatchKind::PinyinFull,
-        SearchAliasKind::PinyinInitials => SearchMatchKind::PinyinInitials,
-        SearchAliasKind::Custom => SearchMatchKind::CustomAlias,
-    };
     let score = base_score + exact_bonus + prefix_bonus;
 
     Some(CandidateScore {
         score,
-        match_kind,
-        reason: format!("matched {} alias; score {score}", alias.kind.as_str()),
+        match_kind: match alias.kind {
+            SearchAliasKind::Title => SearchMatchKind::Title,
+            SearchAliasKind::Target => SearchMatchKind::Target,
+            SearchAliasKind::BrowserTitle => SearchMatchKind::BrowserTitle,
+            SearchAliasKind::PinyinFull => SearchMatchKind::PinyinFull,
+            SearchAliasKind::PinyinInitials => SearchMatchKind::PinyinInitials,
+            SearchAliasKind::Custom => SearchMatchKind::CustomAlias,
+        },
+        reason: format!(
+            "matched {}; score {}",
+            match alias.kind {
+                SearchAliasKind::Title => "title",
+                SearchAliasKind::Target => "target",
+                SearchAliasKind::BrowserTitle => "browser title",
+                SearchAliasKind::PinyinFull => "full pinyin",
+                SearchAliasKind::PinyinInitials => "pinyin initials",
+                SearchAliasKind::Custom => "custom alias",
+            },
+            score
+        ),
     })
 }
 
-fn queries_are_similar(current: &str, historical: &str) -> bool {
-    if current == historical {
+fn best_alias_match(candidate: &SearchCandidate, normalized_query: &str) -> Option<CandidateScore> {
+    candidate
+        .aliases
+        .iter()
+        .filter_map(|alias| score_alias(alias, normalized_query))
+        .max_by(|left, right| left.score.cmp(&right.score))
+}
+
+fn queries_are_similar(left: &str, right: &str) -> bool {
+    if left == right {
         return true;
     }
 
-    let min_len = current.len().min(historical.len());
-    min_len >= 2 && (current.contains(historical) || historical.contains(current))
+    let min_len = left.len().min(right.len());
+    min_len >= 2 && (left.contains(right) || right.contains(left))
 }
 
 fn score_recency(age_millis: u64) -> u64 {
     const HOUR: u64 = 60 * 60 * 1_000;
     const DAY: u64 = 24 * HOUR;
     const WEEK: u64 = 7 * DAY;
+    const MONTH: u64 = 30 * DAY;
 
     if age_millis <= HOUR {
-        120
+        80
     } else if age_millis <= DAY {
-        90
-    } else if age_millis <= WEEK {
         60
-    } else {
+    } else if age_millis <= WEEK {
+        40
+    } else if age_millis <= MONTH {
         20
+    } else {
+        5
     }
 }
 
