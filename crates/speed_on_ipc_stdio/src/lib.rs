@@ -1,6 +1,10 @@
+use std::fmt;
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+// AppError is ~152 bytes; see speed_on_core/lib.rs for rationale.
+#![allow(clippy::result_large_err)]
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -53,6 +57,14 @@ impl StdioTransportError {
 }
 
 pub type StdioResult<T> = Result<T, StdioTransportError>;
+
+impl fmt::Display for StdioTransportError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.error_code, self.message)
+    }
+}
+
+impl std::error::Error for StdioTransportError {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StdioConfig {

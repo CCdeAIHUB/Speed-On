@@ -277,7 +277,7 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
     // 场景：前端最终会调用 CoreApi facade，因此契约测试必须验证 facade 能组合 SQLite、搜索和推荐服务。
     let mut store = ok(SqliteStore::open_in_memory_migrated());
     let indexed_resource = resource();
-    ok(store.upsert_resources(&[indexed_resource.clone()]));
+    ok(store.upsert_resources(std::slice::from_ref(&indexed_resource)));
     ok(store.upsert_search_aliases(
         "app-terminal",
         &[

@@ -1,0 +1,325 @@
+﻿Format, lint, and test	Run clippy	﻿2026-06-29T07:55:51.0766424Z ##[group]Run cargo clippy --workspace --all-targets -- -D warnings
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0767012Z ^[[36;1mcargo clippy --workspace --all-targets -- -D warnings^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0788980Z shell: /usr/bin/bash -e {0}
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0789279Z env:
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0789511Z   CARGO_HOME: /home/runner/.cargo
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0789806Z   CARGO_INCREMENTAL: 0
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0790065Z   CARGO_TERM_COLOR: always
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.0790325Z ##[endgroup]
+Format, lint, and test	Run clippy	2026-06-29T07:55:51.5916726Z ^[[1m^[[92m    Updating^[[0m crates.io index
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.0557841Z ^[[1m^[[92m Downloading^[[0m crates ...
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.1467422Z ^[[1m^[[92m  Downloaded^[[0m fallible-streaming-iterator v0.1.9
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.1641571Z ^[[1m^[[92m  Downloaded^[[0m bitflags v2.13.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.1830868Z ^[[1m^[[92m  Downloaded^[[0m find-msvc-tools v0.1.9
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.1888006Z ^[[1m^[[92m  Downloaded^[[0m cc v1.2.65
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2019025Z ^[[1m^[[92m  Downloaded^[[0m itoa v1.0.18
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2225905Z ^[[1m^[[92m  Downloaded^[[0m shlex v2.0.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2359638Z ^[[1m^[[92m  Downloaded^[[0m fallible-iterator v0.3.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2368773Z ^[[1m^[[92m  Downloaded^[[0m zmij v1.0.21
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2380854Z ^[[1m^[[92m  Downloaded^[[0m smallvec v1.15.2
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2393474Z ^[[1m^[[92m  Downloaded^[[0m foldhash v0.2.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2402864Z ^[[1m^[[92m  Downloaded^[[0m quote v1.0.46
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2484219Z ^[[1m^[[92m  Downloaded^[[0m hashlink v0.12.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2522561Z ^[[1m^[[92m  Downloaded^[[0m pkg-config v0.3.33
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2563528Z ^[[1m^[[92m  Downloaded^[[0m serde_core v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2654986Z ^[[1m^[[92m  Downloaded^[[0m unicode-ident v1.0.24
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2691647Z ^[[1m^[[92m  Downloaded^[[0m proc-macro2 v1.0.106
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2712780Z ^[[1m^[[92m  Downloaded^[[0m serde_derive v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2732735Z ^[[1m^[[92m  Downloaded^[[0m serde v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2755803Z ^[[1m^[[92m  Downloaded^[[0m memchr v2.8.2
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2826915Z ^[[1m^[[92m  Downloaded^[[0m serde_json v1.0.150
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2870534Z ^[[1m^[[92m  Downloaded^[[0m hashbrown v0.17.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.2962570Z ^[[1m^[[92m  Downloaded^[[0m rusqlite v0.40.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.3027679Z ^[[1m^[[92m  Downloaded^[[0m vcpkg v0.2.15
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.3286163Z ^[[1m^[[92m  Downloaded^[[0m syn v2.0.118
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.3354203Z ^[[1m^[[92m  Downloaded^[[0m pinyin v0.11.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.3933951Z ^[[1m^[[92m  Downloaded^[[0m libsqlite3-sys v0.38.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.4875887Z ^[[1m^[[92m   Compiling^[[0m proc-macro2 v1.0.106
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.4923974Z ^[[1m^[[92m   Compiling^[[0m find-msvc-tools v0.1.9
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.4926668Z ^[[1m^[[92m   Compiling^[[0m quote v1.0.46
+Format, lint, and test	Run clippy	2026-06-29T07:55:52.4927218Z ^[[1m^[[92m   Compiling^[[0m shlex v2.0.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:55.4068117Z ^[[1m^[[92m   Compiling^[[0m unicode-ident v1.0.24
+Format, lint, and test	Run clippy	2026-06-29T07:55:55.4295803Z ^[[1m^[[92m   Compiling^[[0m cc v1.2.65
+Format, lint, and test	Run clippy	2026-06-29T07:55:55.5329704Z ^[[1m^[[92m   Compiling^[[0m pkg-config v0.3.33
+Format, lint, and test	Run clippy	2026-06-29T07:55:55.9751044Z ^[[1m^[[92m   Compiling^[[0m serde_core v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:55:56.3932239Z ^[[1m^[[92m   Compiling^[[0m vcpkg v0.2.15
+Format, lint, and test	Run clippy	2026-06-29T07:55:56.7816789Z ^[[1m^[[92m   Compiling^[[0m libsqlite3-sys v0.38.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:57.3349338Z ^[[1m^[[92m   Compiling^[[0m zmij v1.0.21
+Format, lint, and test	Run clippy	2026-06-29T07:55:57.3479949Z ^[[1m^[[92m    Checking^[[0m foldhash v0.2.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:57.4556836Z ^[[1m^[[92m    Checking^[[0m hashbrown v0.17.1
+Format, lint, and test	Run clippy	2026-06-29T07:55:57.8514191Z ^[[1m^[[92m   Compiling^[[0m serde v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:55:57.9979936Z ^[[1m^[[92m   Compiling^[[0m serde_json v1.0.150
+Format, lint, and test	Run clippy	2026-06-29T07:55:58.1978001Z ^[[1m^[[92m   Compiling^[[0m syn v2.0.118
+Format, lint, and test	Run clippy	2026-06-29T07:55:58.2264627Z ^[[1m^[[92m   Compiling^[[0m pinyin v0.11.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:58.7771652Z ^[[1m^[[92m    Checking^[[0m hashlink v0.12.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:58.9881551Z ^[[1m^[[92m    Checking^[[0m smallvec v1.15.2
+Format, lint, and test	Run clippy	2026-06-29T07:55:59.0758499Z ^[[1m^[[92m    Checking^[[0m memchr v2.8.2
+Format, lint, and test	Run clippy	2026-06-29T07:55:59.0931375Z ^[[1m^[[92m    Checking^[[0m bitflags v2.13.0
+Format, lint, and test	Run clippy	2026-06-29T07:55:59.1787613Z ^[[1m^[[92m    Checking^[[0m fallible-streaming-iterator v0.1.9
+Format, lint, and test	Run clippy	2026-06-29T07:55:59.2430128Z ^[[1m^[[92m    Checking^[[0m itoa v1.0.18
+Format, lint, and test	Run clippy	2026-06-29T07:55:59.3175039Z ^[[1m^[[92m    Checking^[[0m fallible-iterator v0.3.0
+Format, lint, and test	Run clippy	2026-06-29T07:56:00.0626221Z ^[[1m^[[92m   Compiling^[[0m serde_derive v1.0.228
+Format, lint, and test	Run clippy	2026-06-29T07:56:13.0680175Z ^[[1m^[[92m    Checking^[[0m rusqlite v0.40.1
+Format, lint, and test	Run clippy	2026-06-29T07:56:13.4789914Z ^[[1m^[[92m    Checking^[[0m speed_on_core v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_core)
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.0235430Z ^[[1m^[[92m    Checking^[[0m speed_on_platform v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_platform)
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.1307830Z ^[[1m^[[92m    Checking^[[0m speed_on_ipc_stdio v0.1.0 (/home/runner/work/Speed-On/Speed-On/crates/speed_on_ipc_stdio)
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3751842Z ^[[1m^[[91merror^[[0m^[[1m: this call to `clone` can be replaced with `std::slice::from_ref`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3777062Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_core/tests/api_contract_tests.rs:280:31
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3806634Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3807632Z ^[[1m^[[94m280^[[0m ^[[1m^[[94m|^[[0m     ok(store.upsert_resources(&[indexed_resource.clone()]));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3837522Z     ^[[1m^[[94m|^[[0m                               ^[[1m^[[91m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[91mhelp: try: `std::slice::from_ref(&indexed_resource)`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3838157Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3838787Z     ^[[1m^[[94m= ^[[0m^[[1mhelp^[[0m: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.96.0/index.html#cloned_ref_to_slice_refs
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3839592Z     ^[[1m^[[94m= ^[[0m^[[1mnote^[[0m: `-D clippy::cloned-ref-to-slice-refs` implied by `-D warnings`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3840245Z     ^[[1m^[[94m= ^[[0m^[[1mhelp^[[0m: to override `-D warnings` add `#[allow(clippy::cloned_ref_to_slice_refs)]`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.3840581Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.4375056Z ^[[1m^[[91merror^[[0m: could not compile `speed_on_core` (test "api_contract_tests") due to 1 previous error
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.4375759Z ^[[1m^[[33mwarning^[[0m: build failed, waiting for other jobs to finish...
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7453104Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7454051Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:128:21
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7454515Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7454998Z ^[[1m^[[94m128^[[0m ^[[1m^[[94m|^[[0m       let config = ok(StdioConfig::from_args_and_env(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7455552Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m __________________^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7456025Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7456870Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7457454Z ^[[1m^[[94m129^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         ["--db", "speed-on.db"],
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7457943Z ^[[1m^[[94m130^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         None,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7458366Z ^[[1m^[[94m131^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7459196Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7460177Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7460488Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7461000Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7461441Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7461946Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7462561Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7462878Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7573822Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7574731Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:141:21
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7575414Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7575926Z ^[[1m^[[94m141^[[0m ^[[1m^[[94m|^[[0m       let config = ok(StdioConfig::from_args_and_env(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7576799Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m __________________^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7577281Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7577828Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7578473Z ^[[1m^[[94m142^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         std::iter::empty::<&str>(),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7579036Z ^[[1m^[[94m143^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Some("env-speed-on.db".to_owned()),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7579524Z ^[[1m^[[94m144^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7580299Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7580926Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7581232Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7581736Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7582170Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7582664Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7583265Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7583577Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7585708Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7586619Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:154:21
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7587059Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7587526Z ^[[1m^[[94m154^[[0m ^[[1m^[[94m|^[[0m       let config = ok(StdioConfig::from_args_and_env(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7588064Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m __________________^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7588539Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7589090Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7589753Z ^[[1m^[[94m155^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         ["--enable-command-opener", "--db", "speed-on.db"],
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7590303Z ^[[1m^[[94m156^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         None,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7590720Z ^[[1m^[[94m157^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7591491Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7592099Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7592404Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7592916Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7593358Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7593835Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7594605Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7594913Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7596249Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7597006Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:167:21
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7597448Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7597932Z ^[[1m^[[94m167^[[0m ^[[1m^[[94m|^[[0m       let config = ok(StdioConfig::from_args_and_env(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7598474Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m __________________^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7598946Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7599485Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7600264Z ^[[1m^[[94m168^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         ["--enable-application-scan", "--db", "speed-on.db"],
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7600826Z ^[[1m^[[94m169^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         None,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7601243Z ^[[1m^[[94m170^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7602028Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7602650Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7602956Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7603458Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7603887Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7604342Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7604948Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7605256Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7606662Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7607403Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:180:21
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7607861Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7608317Z ^[[1m^[[94m180^[[0m ^[[1m^[[94m|^[[0m       let config = ok(StdioConfig::from_args_and_env(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7608857Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m __________________^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7609317Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7609856Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m                  ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7610376Z ^[[1m^[[94m181^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         [
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7610877Z ^[[1m^[[94m182^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m             "--enable-application-scan",
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7611455Z ^[[1m^[[94m183^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m             "--enable-command-opener",
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7611895Z ^[[1m^[[94m...^[[0m   ^[[1m^[[91m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7612264Z ^[[1m^[[94m187^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         None,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7612669Z ^[[1m^[[94m188^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7613440Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7614049Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7614346Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7614848Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7615279Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7615735Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7616597Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7617058Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7637051Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7637679Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:244:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7638046Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7638345Z ^[[1m^[[94m244^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7638734Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7639086Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7639506Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7640010Z ^[[1m^[[94m245^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7640426Z ^[[1m^[[94m246^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7640972Z ^[[1m^[[94m247^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7641351Z ^[[1m^[[94m248^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7642007Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7642546Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7642800Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7643218Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7643577Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7643957Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7644457Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7644718Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7650807Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7651757Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:266:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7652454Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7652959Z ^[[1m^[[94m266^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7653601Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7654188Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7654925Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7655835Z ^[[1m^[[94m267^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7656607Z ^[[1m^[[94m268^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7656998Z ^[[1m^[[94m269^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7657374Z ^[[1m^[[94m270^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7658053Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7658567Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7658815Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7659231Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7659590Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7659965Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7660465Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7660724Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7663794Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7664630Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:286:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7664986Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7665295Z ^[[1m^[[94m286^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7665840Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7666501Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7666918Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7667436Z ^[[1m^[[94m287^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7667840Z ^[[1m^[[94m288^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7668235Z ^[[1m^[[94m289^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7668600Z ^[[1m^[[94m290^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7669231Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7669737Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7670074Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7670488Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7670864Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7671248Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7671753Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7672008Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7676786Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7677568Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:310:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7677932Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7678226Z ^[[1m^[[94m310^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7678610Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7678962Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7679375Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7679871Z ^[[1m^[[94m311^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7680286Z ^[[1m^[[94m312^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7680678Z ^[[1m^[[94m313^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7681040Z ^[[1m^[[94m314^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7681675Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7682174Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7682423Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7682836Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7683194Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7683574Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7684074Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7684332Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7689339Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7689951Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:333:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7690308Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7690607Z ^[[1m^[[94m333^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7690997Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7691343Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7691755Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7692251Z ^[[1m^[[94m334^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7692655Z ^[[1m^[[94m335^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7693185Z ^[[1m^[[94m336^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7693550Z ^[[1m^[[94m337^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7694204Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7694707Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7694960Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7695380Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7695743Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7696289Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7696816Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7697155Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7702012Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7702808Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:356:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7703180Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7703472Z ^[[1m^[[94m356^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7703857Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7704208Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7704617Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7705109Z ^[[1m^[[94m357^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7705510Z ^[[1m^[[94m358^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7705907Z ^[[1m^[[94m359^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7706516Z ^[[1m^[[94m360^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7707165Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7707676Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7707925Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7708343Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7708697Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7709081Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7709600Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7709858Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7714325Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7715096Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:380:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7715465Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7715750Z ^[[1m^[[94m380^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7716350Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7716734Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7717153Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7717649Z ^[[1m^[[94m381^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7718051Z ^[[1m^[[94m382^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7718443Z ^[[1m^[[94m383^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7718803Z ^[[1m^[[94m384^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7719440Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7720088Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7720342Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7720775Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7721147Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7721527Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7722031Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7722284Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7725898Z ^[[1m^[[91merror[E0277]^[[0m^[[1m: `speed_on_ipc_stdio::StdioTransportError` doesn't implement `std::fmt::Display`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7726761Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:403:8
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7727126Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7727530Z ^[[1m^[[94m403^[[0m ^[[1m^[[94m|^[[0m       ok(run_json_lines_transport(
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7727919Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m _____^[[0m^[[1m^[[94m--^[[0m^[[1m^[[91m_^^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7728276Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7728691Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ^[[1m^[[94mrequired by a bound introduced by this call^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7729207Z ^[[1m^[[94m404^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         Cursor::new(input),
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7729622Z ^[[1m^[[94m405^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut output,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7730011Z ^[[1m^[[94m406^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m         &mut dispatcher,
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7730378Z ^[[1m^[[94m407^[[0m ^[[1m^[[94m|^[[0m ^[[1m^[[91m|^[[0m     ));
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7731021Z     ^[[1m^[[94m|^[[0m ^[[1m^[[91m|_____^^[[0m ^[[1m^[[91mthe trait `std::fmt::Display` is not implemented for `speed_on_ipc_stdio::StdioTransportError`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7731531Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7731778Z ^[[1m^[[92mnote^[[0m: required by a bound in `ok`
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7732200Z    ^[[1m^[[94m--> ^[[0mcrates/speed_on_ipc_stdio/tests/stdio_transport_tests.rs:12:13
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7732570Z     ^[[1m^[[94m|^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7732946Z ^[[1m^[[94m 12^[[0m ^[[1m^[[94m|^[[0m fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7733447Z     ^[[1m^[[94m|^[[0m             ^[[1m^[[92m^^^^^^^^^^^^^^^^^^[[0m ^[[1m^[[92mrequired by this bound in `ok`^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.7733700Z 
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.8692340Z ^[[1mFor more information about this error, try `rustc --explain E0277`.^[[0m
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.8716292Z ^[[1m^[[91merror^[[0m: could not compile `speed_on_ipc_stdio` (test "stdio_transport_tests") due to 13 previous errors
+Format, lint, and test	Run clippy	2026-06-29T07:56:15.8844662Z ##[error]Process completed with exit code 101.
