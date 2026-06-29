@@ -17,9 +17,10 @@ pub mod storage;
 pub use api::{
     ApiErrorResponse, ApiOpenResourceRequest, ApiOpenResourceResponse,
     ApiRecommendationRequest, ApiRecommendationResponse, ApiRecommendationResult,
-    ApiRecordSelectionRequest, ApiRecordSelectionResponse, ApiResource, ApiResourceKind,
-    ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResponse, ApiSearchResult,
-    CoreApi, CORE_API_VERSION,
+    ApiRecordSelectionRequest, ApiRecordSelectionResponse, ApiRefreshApplicationsRequest,
+    ApiRefreshApplicationsResponse, ApiResource, ApiResourceKind, ApiResponse,
+    ApiSearchMatchKind, ApiSearchRequest, ApiSearchResponse, ApiSearchResult, CoreApi,
+    CORE_API_VERSION,
 };
 pub use domain::{
     ActivityRecord, CandidateResource, IndexedResource, OpenResourceOutcome, OpenResourceRequest,
@@ -28,7 +29,7 @@ pub use domain::{
 pub use error::{AppError, AppResult};
 pub use ipc::{
     IpcCommand, IpcRequest, IpcResponse, JsonIpcDispatcher, JsonIpcDispatcherWithOpener,
-    IPC_PROTOCOL_VERSION,
+    JsonIpcDispatcherWithScanner, JsonIpcDispatcherWithScannerAndOpener, IPC_PROTOCOL_VERSION,
 };
 pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 pub use ports::{
