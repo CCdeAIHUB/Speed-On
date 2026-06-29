@@ -1,4 +1,7 @@
-use crate::domain::{ActivityRecord, CandidateResource, IndexedResource, ResourceKind};
+use crate::domain::{
+    ActivityRecord, CandidateResource, IndexedResource, OpenResourceOutcome, OpenResourceRequest,
+    ResourceKind,
+};
 use crate::error::AppResult;
 use crate::logging::{SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 use crate::search::SearchCandidate;
@@ -27,6 +30,16 @@ pub trait BrowserHistoryReader {
 /// integration APIs, but those mechanisms must remain outside the domain layer.
 pub trait FileActivityReader {
     fn read_recent_file_activity(&self, since_millis: u64) -> AppResult<Vec<ActivityRecord>>;
+}
+
+/// Opens an indexed resource through the current desktop operating system.
+///
+/// This is a high-risk platform boundary because it can launch applications,
+/// reveal folders, open files, or navigate to browser URLs. Implementations must
+/// live in platform adapters and must perform validation, permission checks, and
+/// system-specific escaping before invoking OS APIs.
+pub trait ResourceOpener {
+    fn open_resource(&mut self, request: &OpenResourceRequest) -> AppResult<OpenResourceOutcome>;
 }
 
 /// Persistence boundary for indexed resources and usage signals.
