@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::domain::IndexedResource;
+use crate::pinyin_alias::PinyinCrateAliasProvider;
 use crate::search::{normalize_search_query, SearchAlias, SearchAliasKind};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,8 +27,8 @@ pub trait PinyinAliasProvider {
 pub struct NoopPinyinAliasProvider;
 
 impl PinyinAliasProvider for NoopPinyinAliasProvider {
-    fn aliases_for_title(&self, _title: &str) -> PinyinAliases {
-        PinyinAliases::empty()
+    fn aliases_for_title(&self, title: &str) -> PinyinAliases {
+        PinyinCrateAliasProvider.aliases_for_title(title)
     }
 }
 
