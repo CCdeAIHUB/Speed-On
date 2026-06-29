@@ -136,7 +136,7 @@ fn recent_activity_breaks_ties_when_open_counts_are_equal() {
             CandidateResource::new(
                 resource("old-app", ResourceKind::Application, "Old App", "/apps/old"),
                 3,
-                Some(now - 40 * 24 * 60 * 60 * 1_000),
+                Some(now - 40u64 * 24 * 60 * 60 * 1_000),
             ),
             CandidateResource::new(
                 resource(
