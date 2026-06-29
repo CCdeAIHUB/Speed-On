@@ -1,13 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+use crate::alias::{NoopPinyinAliasProvider, SearchAliasBuilder};
 use crate::domain::{
     ActivityRecord, IndexedResource, OpenResourceOutcome, OpenResourceRequest, Recommendation,
     RecommendationRequest, ResourceKind,
 };
 use crate::error::AppError;
 use crate::ports::{
-    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchIndexRepository,
-    UserOperationLogRepository,
+    InstalledApplicationScanner, ResourceOpener, ResourceRepository, SearchAliasRepository,
+    SearchIndexRepository, UserOperationLogRepository,
 };
 use crate::search::{SearchMatchKind, SearchRequest, SearchResult, SearchService};
 use crate::service::{IndexService, RecommendationService};
@@ -284,18 +285,19 @@ pub struct ApiRefreshApplicationsRequest {
 pub struct ApiRefreshApplicationsResponse {
     pub api_version: String,
     pub scanned_count: usize,
+    pub alias_count: usize,
 }
 
 pub struct CoreApi<R>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     repository: R,
 }
 
 impl<R> CoreApi<R>
 where
-    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
 {
     pub fn new(repository: R) -> Self {
         Self { repository }
@@ -386,21 +388,44 @@ where
     pub fn refresh_applications_with<S>(
         &mut self,
         scanner: S,
-        _request: ApiRefreshApplicationsRequest,
+        request: ApiRefreshApplicationsRequest,
     ) -> ApiResponse<ApiRefreshApplicationsResponse>
     where
         S: InstalledApplicationScanner,
     {
-        // IndexService owns the resource upsert flow. API only adapts the
-        // frontend command into the existing indexing service boundary.
+        // IndexService owns resource upserts. Alias generation is intentionally
+        // performed after the resource write so failures are visible instead of
+        // silently leaving scanned applications unsearchable.
         let mut service = IndexService::new(&mut self.repository, scanner);
-        match service.refresh_installed_applications() {
-            Ok(scanned_count) => ApiResponse::success(ApiRefreshApplicationsResponse {
-                api_version: CORE_API_VERSION.to_owned(),
-                scanned_count,
-            }),
+        match service.refresh_installed_application_resources() {
+            Ok(resources) => match self.write_generated_aliases(&resources, request.requested_at_millis) {
+                Ok(alias_count) => ApiResponse::success(ApiRefreshApplicationsResponse {
+                    api_version: CORE_API_VERSION.to_owned(),
+                    scanned_count: resources.len(),
+                    alias_count,
+                }),
+                Err(error) => ApiResponse::failure(error),
+            },
             Err(error) => ApiResponse::failure(error),
         }
+    }
+
+    fn write_generated_aliases(
+        &mut self,
+        resources: &[IndexedResource],
+        created_at_millis: u64,
+    ) -> crate::error::AppResult<usize> {
+        let builder = SearchAliasBuilder::new(NoopPinyinAliasProvider);
+        let mut alias_count = 0;
+
+        for resource in resources {
+            let aliases = builder.aliases_for_resource(resource);
+            alias_count += aliases.len();
+            self.repository
+                .upsert_search_aliases(&resource.id, &aliases, created_at_millis)?;
+        }
+
+        Ok(alias_count)
     }
 }
 
