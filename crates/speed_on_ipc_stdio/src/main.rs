@@ -2,7 +2,8 @@ use std::env;
 use std::io::{self, BufReader};
 
 use speed_on_ipc_stdio::{
-    open_command_opener_dispatcher, open_default_dispatcher, run_json_lines_transport, StdioConfig,
+    open_application_scanner_dispatcher, open_command_opener_dispatcher, open_default_dispatcher,
+    open_full_platform_dispatcher, run_json_lines_transport, StdioConfig,
 };
 
 fn main() {
@@ -23,11 +24,22 @@ fn run() -> speed_on_ipc_stdio::StdioResult<()> {
     let stdin = io::stdin();
     let stdout = io::stdout();
 
-    if config.enable_command_opener {
-        let mut dispatcher = open_command_opener_dispatcher(&config)?;
-        run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
-    } else {
-        let mut dispatcher = open_default_dispatcher(&config)?;
-        run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+    match (config.enable_application_scan, config.enable_command_opener) {
+        (true, true) => {
+            let mut dispatcher = open_full_platform_dispatcher(&config)?;
+            run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+        }
+        (true, false) => {
+            let mut dispatcher = open_application_scanner_dispatcher(&config)?;
+            run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+        }
+        (false, true) => {
+            let mut dispatcher = open_command_opener_dispatcher(&config)?;
+            run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+        }
+        (false, false) => {
+            let mut dispatcher = open_default_dispatcher(&config)?;
+            run_json_lines_transport(BufReader::new(stdin.lock()), stdout.lock(), &mut dispatcher)
+        }
     }
 }
