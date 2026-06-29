@@ -6,6 +6,8 @@ This is the first runnable IPC transport for Speed-On. It is intentionally simpl
 
 This transport carries the existing `speed-on-ipc-v1` envelope. It is not HTTP and it is not QUIC.
 
+Full protocol reference: `docs/ipc/protocol-v1.md`.
+
 ## Start command
 
 Use an explicit database path:
@@ -106,10 +108,10 @@ Without `--enable-application-scan`, a `refresh_applications` request returns `C
 {"protocol_version":"speed-on-ipc-v1","request_id":"refresh-1","command":"refresh_applications","response":{"ok":false,"data":null,"error":{"error_code":"CORE_PLATFORM_UNSUPPORTED","message":"refresh_applications requires a platform InstalledApplicationScanner adapter","module":"ipc::JsonIpcDispatcher::refresh_applications","recoverable":false,"suggestion":null,"trace_id":null}}}
 ```
 
-With `--enable-application-scan`, successful responses return the number of applications discovered and written into SQLite.
+With `--enable-application-scan`, successful responses return scanned and generated alias counts.
 
 ```json
-{"protocol_version":"speed-on-ipc-v1","request_id":"refresh-1","command":"refresh_applications","response":{"ok":true,"data":{"api_version":"core-api-v1","scanned_count":12},"error":null}}
+{"protocol_version":"speed-on-ipc-v1","request_id":"refresh-1","command":"refresh_applications","response":{"ok":true,"data":{"api_version":"core-api-v1","scanned_count":12,"alias_count":24},"error":null}}
 ```
 
 ## Malformed request behavior
