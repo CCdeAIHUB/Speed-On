@@ -4,6 +4,7 @@
 //! macOS, Linux, SQLite, and frontend bindings must be implemented behind the
 //! ports defined here so that business rules stay testable and portable.
 
+pub mod alias;
 pub mod api;
 pub mod domain;
 pub mod error;
@@ -14,6 +15,7 @@ pub mod search;
 pub mod service;
 pub mod storage;
 
+pub use alias::{NoopPinyinAliasProvider, PinyinAliasProvider, PinyinAliases, SearchAliasBuilder};
 pub use api::{
     ApiErrorResponse, ApiOpenResourceRequest, ApiOpenResourceResponse,
     ApiRecommendationRequest, ApiRecommendationResponse, ApiRecommendationResult,
@@ -34,7 +36,8 @@ pub use ipc::{
 pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 pub use ports::{
     BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceOpener,
-    ResourceRepository, SearchIndexRepository, SystemLogSink, UserOperationLogRepository,
+    ResourceRepository, SearchAliasRepository, SearchIndexRepository, SystemLogSink,
+    UserOperationLogRepository,
 };
 pub use search::{
     normalize_search_query, SearchAlias, SearchAliasKind, SearchCandidate, SearchMatchKind,
