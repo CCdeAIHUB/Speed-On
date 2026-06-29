@@ -15,21 +15,25 @@ pub mod service;
 pub mod storage;
 
 pub use api::{
-    ApiErrorResponse, ApiRecommendationRequest, ApiRecommendationResponse,
-    ApiRecommendationResult, ApiRecordSelectionRequest, ApiRecordSelectionResponse, ApiResource,
-    ApiResourceKind, ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResponse,
-    ApiSearchResult, CoreApi, CORE_API_VERSION,
+    ApiErrorResponse, ApiOpenResourceRequest, ApiOpenResourceResponse,
+    ApiRecommendationRequest, ApiRecommendationResponse, ApiRecommendationResult,
+    ApiRecordSelectionRequest, ApiRecordSelectionResponse, ApiResource, ApiResourceKind,
+    ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResponse, ApiSearchResult,
+    CoreApi, CORE_API_VERSION,
 };
 pub use domain::{
-    ActivityRecord, CandidateResource, IndexedResource, Recommendation, RecommendationRequest,
-    ResourceKind,
+    ActivityRecord, CandidateResource, IndexedResource, OpenResourceOutcome, OpenResourceRequest,
+    Recommendation, RecommendationRequest, ResourceKind,
 };
 pub use error::{AppError, AppResult};
-pub use ipc::{IpcCommand, IpcRequest, IpcResponse, JsonIpcDispatcher, IPC_PROTOCOL_VERSION};
+pub use ipc::{
+    IpcCommand, IpcRequest, IpcResponse, JsonIpcDispatcher, JsonIpcDispatcherWithOpener,
+    IPC_PROTOCOL_VERSION,
+};
 pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
 pub use ports::{
-    BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceRepository,
-    SearchIndexRepository, SystemLogSink, UserOperationLogRepository,
+    BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceOpener,
+    ResourceRepository, SearchIndexRepository, SystemLogSink, UserOperationLogRepository,
 };
 pub use search::{
     normalize_search_query, SearchAlias, SearchAliasKind, SearchCandidate, SearchMatchKind,
