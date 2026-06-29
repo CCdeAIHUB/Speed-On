@@ -180,3 +180,22 @@ fn json_lines_transport_can_drive_real_core_search() {
         json!("app-terminal")
     );
 }
+
+#[test]
+fn json_lines_transport_reports_open_resource_unsupported_until_platform_opener_exists() {
+    // 场景：stdio binary 当前没有真实平台 opener，open_resource 必须返回 unsupported，不能假装打开成功。
+    let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","payload":{"resource":{"id":"app-terminal","kind":"application","title":"Terminal","target":"/apps/terminal","icon_path":"terminal.png"},"requested_at_millis":300}}
+"#;
+    let mut output = Vec::new();
+    let mut dispatcher = real_dispatcher();
+
+    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+
+    let response = parse_json_line(&output);
+    assert_eq!(response["request_id"], json!("open-1"));
+    assert_eq!(response["response"]["ok"], json!(false));
+    assert_eq!(
+        response["response"]["error"]["error_code"],
+        json!("CORE_PLATFORM_UNSUPPORTED")
+    );
+}
