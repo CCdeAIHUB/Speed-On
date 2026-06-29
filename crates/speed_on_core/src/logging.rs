@@ -25,7 +25,7 @@ impl LogLevel {
 impl TryFrom<&str> for LogLevel {
     type Error = AppError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, AppError> {
         match value {
             "debug" => Ok(Self::Debug),
             "info" => Ok(Self::Info),

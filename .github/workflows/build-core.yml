@@ -47,7 +47,7 @@ jobs:
           key: ${{ matrix.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }} -p speed-on-ipc-stdio
+        run: cargo build --release --target ${{ matrix.target }} -p speed_on_ipc_stdio
 
       - name: Rename binary (Windows)
         if: matrix.os == 'windows'

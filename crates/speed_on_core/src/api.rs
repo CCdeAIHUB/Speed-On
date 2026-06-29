@@ -434,7 +434,7 @@ where
         // IndexService owns resource upserts. Alias generation is intentionally
         // performed after the resource write so failures are visible instead of
         // silently leaving scanned applications unsearchable.
-        let mut service = IndexService::new(&mut self.repository, scanner);
+        let service = IndexService::new(&mut self.repository, scanner);
         match service.refresh_installed_application_resources() {
             Ok(resources) => {
                 match self.write_generated_aliases(&resources, request.requested_at_millis) {

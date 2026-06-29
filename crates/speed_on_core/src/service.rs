@@ -2,7 +2,7 @@ mod index;
 
 pub use index::IndexService;
 
-use crate::domain::{CandidateResource, Recommendation, RecommendationRequest, ResourceKind};
+use crate::domain::{CandidateResource, Recommendation, RecommendationRequest};
 use crate::error::{AppError, AppResult};
 use crate::ports::ResourceRepository;
 use crate::search::score_recency;

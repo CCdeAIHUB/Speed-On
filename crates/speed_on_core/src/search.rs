@@ -32,7 +32,7 @@ impl SearchAliasKind {
 impl TryFrom<&str> for SearchAliasKind {
     type Error = AppError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, AppError> {
         match value {
             "title" => Ok(Self::Title),
             "target" => Ok(Self::Target),

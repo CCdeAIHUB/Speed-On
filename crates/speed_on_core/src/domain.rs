@@ -24,7 +24,7 @@ impl ResourceKind {
 impl TryFrom<&str> for ResourceKind {
     type Error = AppError;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self, AppError> {
         match value {
             "application" => Ok(Self::Application),
             "file" => Ok(Self::File),

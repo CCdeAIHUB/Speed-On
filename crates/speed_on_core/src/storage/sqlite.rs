@@ -581,8 +581,8 @@ impl SearchIndexRepository for SqliteStore {
         // Collect all resource IDs upfront so we can batch-load aliases and
         // selection signals instead of issuing one query per resource (N+1).
         let resource_ids: Vec<String> = rows.iter().map(|row| row.id.clone()).collect();
-        let aliases_by_resource = self.load_aliases_for_resources(&resource_ids)?;
-        let signals_by_resource = self.load_selection_signals_for_resources(&resource_ids)?;
+        let mut aliases_by_resource = self.load_aliases_for_resources(&resource_ids)?;
+        let mut signals_by_resource = self.load_selection_signals_for_resources(&resource_ids)?;
 
         let mut candidates = Vec::new();
         for row in rows {
