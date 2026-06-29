@@ -1,10 +1,11 @@
 use serde_json::{json, Value};
 use speed_on_core::{
     ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecommendationResult,
-    ApiRecordSelectionRequest, ApiResource, ApiResourceKind, ApiResponse, ApiSearchMatchKind,
-    ApiSearchRequest, ApiSearchResult, AppError, AppResult, CoreApi, IndexedResource,
-    OpenResourceOutcome, OpenResourceRequest, Recommendation, ResourceKind, ResourceOpener,
-    ResourceRepository, SearchAlias, SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
+    ApiRecordSelectionRequest, ApiRefreshApplicationsRequest, ApiResource, ApiResourceKind,
+    ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResult, AppError, AppResult,
+    CoreApi, IndexedResource, InstalledApplicationScanner, OpenResourceOutcome, OpenResourceRequest,
+    Recommendation, ResourceKind, ResourceOpener, ResourceRepository, SearchAlias,
+    SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -81,6 +82,23 @@ impl ResourceOpener for RecordingOpener {
             target: request.resource.target.clone(),
             opened_at_millis: request.requested_at_millis,
         })
+    }
+}
+
+struct MockApplicationScanner;
+
+impl InstalledApplicationScanner for MockApplicationScanner {
+    fn scan_installed_applications(&self) -> AppResult<Vec<IndexedResource>> {
+        Ok(vec![IndexedResource {
+            id: "app-notes".to_owned(),
+            kind: ResourceKind::Application,
+            title: "Notes".to_owned(),
+            target: "/apps/notes".to_owned(),
+            icon_path: Some("notes.png".to_owned()),
+            source: "mock_scanner".to_owned(),
+            first_seen_at_millis: 10,
+            last_seen_at_millis: 10,
+        }])
     }
 }
 
@@ -232,6 +250,21 @@ fn open_resource_request_contract_contains_resource_and_request_time() {
 }
 
 #[test]
+fn refresh_applications_request_contract_contains_request_time() {
+    // 场景：前端触发应用扫描时必须带 request time，方便未来日志和 trace 关联。
+    let request = ApiRefreshApplicationsRequest {
+        requested_at_millis: 400,
+    };
+
+    assert_eq!(
+        to_json(&request),
+        json!({
+            "requested_at_millis": 400
+        })
+    );
+}
+
+#[test]
 fn core_api_facade_executes_search_recommend_and_record_selection() {
     // 场景：前端最终会调用 CoreApi facade，因此契约测试必须验证 facade 能组合 SQLite、搜索和推荐服务。
     let mut store = ok(SqliteStore::open_in_memory_migrated());
@@ -328,4 +361,30 @@ fn core_api_open_resource_returns_structured_opener_error() {
     let error = some(response.error);
     assert_eq!(error.error_code, "CORE_PLATFORM_UNSUPPORTED");
     assert_eq!(error.module, "tests::RecordingOpener");
+}
+
+#[test]
+fn core_api_refresh_applications_uses_scanner_and_updates_sqlite_index() {
+    // 场景：前端触发应用扫描时，Core 必须通过 InstalledApplicationScanner 并把结果写入 SQLite。
+    let mut store = ok(SqliteStore::open_in_memory_migrated());
+
+    {
+        let mut api = CoreApi::new(&mut store);
+        let response = api.refresh_applications_with(
+            MockApplicationScanner,
+            ApiRefreshApplicationsRequest {
+                requested_at_millis: 400,
+            },
+        );
+
+        assert!(response.ok);
+        let data = some(response.data);
+        assert_eq!(data.scanned_count, 1);
+    }
+
+    let kinds = [ResourceKind::Application];
+    let candidates = ok(store.load_recommendation_candidates(Some(&kinds)));
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].resource.id, "app-notes");
+    assert_eq!(candidates[0].resource.title, "Notes");
 }
