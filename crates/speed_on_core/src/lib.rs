@@ -4,6 +4,13 @@
 //! macOS, Linux, SQLite, and frontend bindings must be implemented behind the
 //! ports defined here so that business rules stay testable and portable.
 
+// AppError carries multiple Option<String> diagnostic fields (error_code,
+// message, module, cause, suggestion, trace_id) which push its size to ~152
+// bytes.  This is intentional for a rich structured error type.  Boxing it
+// would complicate every `?` site and every trait method signature for no
+// real benefit since errors are not constructed in hot loops.
+#![allow(clippy::result_large_err)]
+
 pub mod alias;
 pub mod api;
 pub mod domain;

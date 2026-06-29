@@ -11,12 +11,10 @@ impl PinyinAliasProvider for PinyinCrateAliasProvider {
         let mut initials = String::new();
         let mut converted = false;
 
-        for item in title.to_pinyin() {
-            if let Some(pinyin) = item {
-                converted = true;
-                full.push_str(pinyin.plain());
-                initials.push_str(pinyin.first_letter());
-            }
+        for pinyin in title.to_pinyin().flatten() {
+            converted = true;
+            full.push_str(pinyin.plain());
+            initials.push_str(pinyin.first_letter());
         }
 
         if converted {
