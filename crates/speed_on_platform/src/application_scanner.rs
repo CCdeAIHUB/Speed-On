@@ -145,12 +145,13 @@ fn parse_linux_desktop_entry(path: &Path, now_millis: u64) -> Option<IndexedReso
 fn desktop_value(content: &str, key: &str) -> Option<String> {
     for line in content.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with('#') || trimmed.starts_with('[') {
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('[') {
             continue;
         }
-        let (line_key, value) = trimmed.split_once('=')?;
-        if line_key == key {
-            return Some(value.trim().to_owned());
+        if let Some((line_key, value)) = trimmed.split_once('=') {
+            if line_key == key {
+                return Some(value.trim().to_owned());
+            }
         }
     }
     None
