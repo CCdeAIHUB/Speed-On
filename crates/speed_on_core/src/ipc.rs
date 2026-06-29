@@ -3,10 +3,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::api::{
-    ApiRecommendationRequest, ApiRecordSelectionRequest, ApiResponse, ApiSearchRequest, CoreApi,
+    ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecordSelectionRequest, ApiResponse,
+    ApiSearchRequest, CoreApi,
 };
 use crate::error::{AppError, AppResult};
-use crate::ports::{ResourceRepository, SearchIndexRepository, UserOperationLogRepository};
+use crate::ports::{
+    ResourceOpener, ResourceRepository, SearchIndexRepository, UserOperationLogRepository,
+};
 
 pub const IPC_PROTOCOL_VERSION: &str = "speed-on-ipc-v1";
 
@@ -16,6 +19,7 @@ pub enum IpcCommand {
     Search,
     Recommend,
     RecordSelection,
+    OpenResource,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -60,21 +64,8 @@ where
     }
 
     fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
-        if request.protocol_version != IPC_PROTOCOL_VERSION {
-            return ApiResponse::failure(AppError::invalid_argument(
-                format!(
-                    "unsupported IPC protocol version: {}",
-                    request.protocol_version
-                ),
-                "ipc::JsonIpcDispatcher",
-            ));
-        }
-
-        if request.request_id.trim().is_empty() {
-            return ApiResponse::failure(AppError::invalid_argument(
-                "IPC request_id must not be empty",
-                "ipc::JsonIpcDispatcher",
-            ));
+        if let Some(error) = validate_request(request) {
+            return ApiResponse::failure(error);
         }
 
         match request.command {
@@ -99,8 +90,99 @@ where
                 Ok(payload) => api_response_to_json(self.api.record_selection(payload)),
                 Err(error) => ApiResponse::failure(error),
             },
+            IpcCommand::OpenResource => ApiResponse::failure(AppError::platform_unsupported(
+                "open_resource requires a platform ResourceOpener adapter",
+                "ipc::JsonIpcDispatcher::open_resource",
+            )),
         }
     }
+}
+
+pub struct JsonIpcDispatcherWithOpener<R, O>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    O: ResourceOpener,
+{
+    api: CoreApi<R>,
+    opener: O,
+}
+
+impl<R, O> JsonIpcDispatcherWithOpener<R, O>
+where
+    R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
+    O: ResourceOpener,
+{
+    pub fn new(api: CoreApi<R>, opener: O) -> Self {
+        Self { api, opener }
+    }
+
+    pub fn dispatch(&mut self, request: IpcRequest) -> IpcResponse {
+        let response = self.dispatch_inner(&request);
+        IpcResponse {
+            protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+            request_id: request.request_id,
+            command: request.command,
+            response,
+        }
+    }
+
+    fn dispatch_inner(&mut self, request: &IpcRequest) -> ApiResponse<Value> {
+        if let Some(error) = validate_request(request) {
+            return ApiResponse::failure(error);
+        }
+
+        match request.command {
+            IpcCommand::Search => match decode_payload::<ApiSearchRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithOpener::search",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.search(payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+            IpcCommand::Recommend => match decode_payload::<ApiRecommendationRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithOpener::recommend",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.recommend(payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+            IpcCommand::RecordSelection => match decode_payload::<ApiRecordSelectionRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithOpener::record_selection",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.record_selection(payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+            IpcCommand::OpenResource => match decode_payload::<ApiOpenResourceRequest>(
+                request.payload.clone(),
+                "ipc::JsonIpcDispatcherWithOpener::open_resource",
+            ) {
+                Ok(payload) => api_response_to_json(self.api.open_resource_with(&mut self.opener, payload)),
+                Err(error) => ApiResponse::failure(error),
+            },
+        }
+    }
+}
+
+fn validate_request(request: &IpcRequest) -> Option<AppError> {
+    if request.protocol_version != IPC_PROTOCOL_VERSION {
+        return Some(AppError::invalid_argument(
+            format!(
+                "unsupported IPC protocol version: {}",
+                request.protocol_version
+            ),
+            "ipc::JsonIpcDispatcher",
+        ));
+    }
+
+    if request.request_id.trim().is_empty() {
+        return Some(AppError::invalid_argument(
+            "IPC request_id must not be empty",
+            "ipc::JsonIpcDispatcher",
+        ));
+    }
+
+    None
 }
 
 fn decode_payload<T>(payload: Value, module: &'static str) -> AppResult<T>
