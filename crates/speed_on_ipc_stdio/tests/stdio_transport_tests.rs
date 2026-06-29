@@ -1,8 +1,12 @@
 use std::io::Cursor;
 
 use serde_json::{json, Value};
-use speed_on_core::{CoreApi, IndexedResource, IpcRequest, ResourceKind, ResourceRepository, SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION};
+use speed_on_core::{
+    AppResult, CoreApi, IndexedResource, IpcRequest, JsonIpcDispatcherWithOpener, ResourceKind,
+    ResourceRepository, SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
+};
 use speed_on_ipc_stdio::{run_json_lines_transport, IpcDispatcher, StdioConfig};
+use speed_on_platform::{CommandPlan, CommandResourceOpener, CommandRunner};
 
 fn ok<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
     match result {
@@ -40,7 +44,7 @@ fn resource() -> IndexedResource {
     }
 }
 
-fn real_dispatcher() -> speed_on_core::JsonIpcDispatcher<SqliteStore> {
+fn store_with_terminal() -> SqliteStore {
     let mut store = ok(SqliteStore::open_in_memory_migrated());
     ok(store.upsert_resources(&[resource()]));
     ok(store.upsert_search_aliases(
@@ -51,8 +55,28 @@ fn real_dispatcher() -> speed_on_core::JsonIpcDispatcher<SqliteStore> {
         ],
         10,
     ));
+    store
+}
 
-    speed_on_core::JsonIpcDispatcher::new(CoreApi::new(store))
+fn real_dispatcher() -> speed_on_core::JsonIpcDispatcher<SqliteStore> {
+    speed_on_core::JsonIpcDispatcher::new(CoreApi::new(store_with_terminal()))
+}
+
+#[derive(Default)]
+struct RecordingRunner;
+
+impl CommandRunner for RecordingRunner {
+    fn run(&mut self, _plan: &CommandPlan) -> AppResult<()> {
+        Ok(())
+    }
+}
+
+fn command_opener_dispatcher(
+) -> JsonIpcDispatcherWithOpener<SqliteStore, CommandResourceOpener<RecordingRunner>> {
+    JsonIpcDispatcherWithOpener::new(
+        CoreApi::new(store_with_terminal()),
+        CommandResourceOpener::new(RecordingRunner),
+    )
 }
 
 struct EchoDispatcher;
@@ -81,6 +105,7 @@ fn stdio_config_reads_database_path_from_db_arg() {
     ));
 
     assert_eq!(config.database_path.to_string_lossy(), "speed-on.db");
+    assert!(!config.enable_command_opener);
 }
 
 #[test]
@@ -92,6 +117,33 @@ fn stdio_config_uses_environment_database_path_when_arg_is_missing() {
     ));
 
     assert_eq!(config.database_path.to_string_lossy(), "env-speed-on.db");
+    assert!(!config.enable_command_opener);
+}
+
+#[test]
+fn stdio_config_requires_explicit_flag_to_enable_command_opener() {
+    // 场景：真实平台 command opener 默认关闭，必须显式传 --enable-command-opener 才允许接入。
+    let config = ok(StdioConfig::from_args_and_env(
+        ["--enable-command-opener", "--db", "speed-on.db"],
+        None,
+    ));
+
+    assert_eq!(config.database_path.to_string_lossy(), "speed-on.db");
+    assert!(config.enable_command_opener);
+}
+
+#[test]
+fn stdio_config_rejects_unknown_arguments() {
+    // 场景：未知启动参数不能被静默忽略，避免前端以为某个安全开关已经生效。
+    let result = StdioConfig::from_args_and_env(["--unknown", "--db", "speed-on.db"], None);
+
+    let error = match result {
+        Ok(_) => panic!("unknown argument should fail"),
+        Err(error) => error,
+    };
+
+    assert_eq!(error.error_code, "IPC_STDIO_INVALID_INPUT");
+    assert_eq!(error.module, "ipc_stdio::StdioConfig");
 }
 
 #[test]
@@ -182,8 +234,8 @@ fn json_lines_transport_can_drive_real_core_search() {
 }
 
 #[test]
-fn json_lines_transport_reports_open_resource_unsupported_until_platform_opener_exists() {
-    // 场景：stdio binary 当前没有真实平台 opener，open_resource 必须返回 unsupported，不能假装打开成功。
+fn json_lines_transport_reports_open_resource_unsupported_when_command_opener_is_disabled() {
+    // 场景：stdio binary 默认没有真实平台 opener，open_resource 必须返回 unsupported，不能假装打开成功。
     let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","payload":{"resource":{"id":"app-terminal","kind":"application","title":"Terminal","target":"/apps/terminal","icon_path":"terminal.png"},"requested_at_millis":300}}
 "#;
     let mut output = Vec::new();
@@ -198,4 +250,21 @@ fn json_lines_transport_reports_open_resource_unsupported_until_platform_opener_
         response["response"]["error"]["error_code"],
         json!("CORE_PLATFORM_UNSUPPORTED")
     );
+}
+
+#[test]
+fn json_lines_transport_can_drive_open_resource_when_command_opener_is_enabled() {
+    // 场景：显式接入 command opener 后，open_resource 可通过 stdio transport 成功并记录 activity。
+    let input = br#"{"protocol_version":"speed-on-ipc-v1","request_id":"open-1","command":"open_resource","payload":{"resource":{"id":"app-terminal","kind":"application","title":"Terminal","target":"/apps/terminal","icon_path":"terminal.png"},"requested_at_millis":300}}
+"#;
+    let mut output = Vec::new();
+    let mut dispatcher = command_opener_dispatcher();
+
+    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+
+    let response = parse_json_line(&output);
+    assert_eq!(response["request_id"], json!("open-1"));
+    assert_eq!(response["response"]["ok"], json!(true));
+    assert_eq!(response["response"]["data"]["opened"], json!(true));
+    assert_eq!(response["response"]["data"]["activity_recorded"], json!(true));
 }
