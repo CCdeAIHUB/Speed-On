@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{
-    IndexedResource, OpenResourceOutcome, OpenResourceRequest, Recommendation,
+    ActivityRecord, IndexedResource, OpenResourceOutcome, OpenResourceRequest, Recommendation,
     RecommendationRequest, ResourceKind,
 };
 use crate::error::AppError;
@@ -253,17 +253,19 @@ pub struct ApiOpenResourceRequest {
 pub struct ApiOpenResourceResponse {
     pub api_version: String,
     pub opened: bool,
+    pub activity_recorded: bool,
     pub resource_id: String,
     pub kind: ApiResourceKind,
     pub target: String,
     pub opened_at_millis: u64,
 }
 
-impl From<OpenResourceOutcome> for ApiOpenResourceResponse {
-    fn from(outcome: OpenResourceOutcome) -> Self {
+impl ApiOpenResourceResponse {
+    pub fn from_outcome(outcome: OpenResourceOutcome, activity_recorded: bool) -> Self {
         Self {
             api_version: CORE_API_VERSION.to_owned(),
             opened: true,
+            activity_recorded,
             resource_id: outcome.resource_id,
             kind: ApiResourceKind::from(outcome.kind),
             target: outcome.target,
@@ -358,9 +360,26 @@ where
         );
 
         match opener.open_resource(&open_request) {
-            Ok(outcome) => ApiResponse::success(ApiOpenResourceResponse::from(outcome)),
+            Ok(outcome) => {
+                let activity = activity_record_from_open_outcome(&outcome);
+                match self.repository.record_activity(&activity) {
+                    Ok(()) => ApiResponse::success(ApiOpenResourceResponse::from_outcome(outcome, true)),
+                    Err(error) => ApiResponse::failure(error),
+                }
+            }
             Err(error) => ApiResponse::failure(error),
         }
+    }
+}
+
+fn activity_record_from_open_outcome(outcome: &OpenResourceOutcome) -> ActivityRecord {
+    ActivityRecord {
+        id: format!("open-{}-{}", outcome.opened_at_millis, outcome.resource_id),
+        resource_id: Some(outcome.resource_id.clone()),
+        kind: outcome.kind,
+        target: outcome.target.clone(),
+        opened_at_millis: outcome.opened_at_millis,
+        source: "open_resource".to_owned(),
     }
 }
 
