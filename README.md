@@ -34,6 +34,7 @@ The Rust core is responsible for:
 11. Providing a stable Core API v1 contract for future native frontends and IPC adapters.
 12. Providing a minimal JSON IPC v1 envelope and dispatcher that can be carried by a future platform transport.
 13. Providing a runnable stdio JSON Lines IPC transport for early cross-platform frontend integration and debugging.
+14. Providing an `open_resource` API / IPC contract behind a platform `ResourceOpener` boundary.
 
 ## Architecture rules
 
@@ -48,10 +49,11 @@ The backend follows the Codex stability and anti-corruption development skill us
 - Frontend-facing contracts must use stable DTOs instead of binding directly to internal domain/storage types.
 - IPC envelopes must stay transport-agnostic until a concrete platform transport is selected.
 - Concrete transports must remain thin adapters and must not duplicate Core search/recommend/selection logic.
+- Opening resources must go through a platform `ResourceOpener`; Core API and IPC must not directly invoke OS commands.
 
 ## Current implementation stage
 
-Stage 6 adds a runnable stdio JSON Lines IPC transport:
+Stage 7 adds the `open_resource` contract and opener boundary:
 
 - Rust workspace.
 - Domain models.
@@ -62,12 +64,12 @@ Stage 6 adds a runnable stdio JSON Lines IPC transport:
 - Recommendation service.
 - Search service with title, target, browser title, pinyin, pinyin-initial, and user-history ranking support.
 - User operation log and sanitized system log models.
-- Core API v1 DTOs and response envelope for search, recommend, and record_selection.
-- JSON IPC v1 envelope and dispatcher for search, recommend, and record_selection.
+- Core API v1 DTOs and response envelope for search, recommend, record_selection, and open_resource.
+- JSON IPC v1 envelope and dispatcher for search, recommend, record_selection, and open_resource.
 - `speed-on-ipc-stdio` binary that reads one IPC request JSON per stdin line and writes one IPC response JSON per stdout line.
-- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, and stdio transport behavior.
+- TDD tests for recommendation behavior, search behavior, logging behavior, schema expectations, SQLite persistence, API JSON contracts, IPC JSON contracts, open_resource contracts, and stdio transport behavior.
 
-Platform-specific scanners, OS log listeners, browser-history readers, pinyin alias builders, native Named Pipe / Unix Socket transports, and native frontend bindings will be added in later stages.
+Platform-specific scanners, OS log listeners, browser-history readers, pinyin alias builders, native Named Pipe / Unix Socket transports, Windows/macOS/Linux ResourceOpener adapters, and native frontend bindings will be added in later stages.
 
 ## API and IPC documentation
 
