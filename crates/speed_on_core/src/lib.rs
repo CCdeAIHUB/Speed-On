@@ -10,6 +10,7 @@ pub mod domain;
 pub mod error;
 pub mod ipc;
 pub mod logging;
+pub mod pinyin_alias;
 pub mod ports;
 pub mod search;
 pub mod service;
@@ -34,6 +35,7 @@ pub use ipc::{
     JsonIpcDispatcherWithScanner, JsonIpcDispatcherWithScannerAndOpener, IPC_PROTOCOL_VERSION,
 };
 pub use logging::{LogLevel, SystemLogEntry, UserSearchLogEntry, UserSelectionLogEntry};
+pub use pinyin_alias::PinyinCrateAliasProvider;
 pub use ports::{
     BrowserHistoryReader, FileActivityReader, InstalledApplicationScanner, ResourceOpener,
     ResourceRepository, SearchAliasRepository, SearchIndexRepository, SystemLogSink,
