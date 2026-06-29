@@ -63,7 +63,7 @@ Fields:
 
 - `protocol_version`: must be `speed-on-ipc-v1`.
 - `request_id`: frontend-generated request id. Must not be empty.
-- `command`: one of `search`, `recommend`, `record_selection`.
+- `command`: one of `search`, `recommend`, `record_selection`, `open_resource`.
 - `payload`: command-specific Core API request payload.
 
 ### IPC response
@@ -90,6 +90,7 @@ Important behavior:
 - Unsupported `protocol_version` returns a structured error.
 - Invalid payload returns a structured error.
 - IPC dispatcher must not panic on malformed payloads.
+- `open_resource` requires a platform `ResourceOpener` adapter. Dispatchers without an opener return `CORE_PLATFORM_UNSUPPORTED`.
 
 ## Common resource DTO
 
@@ -98,7 +99,7 @@ Important behavior:
   "id": "app-terminal",
   "kind": "application",
   "title": "Terminal",
-  "target": "/System/Applications/Utilities/Terminal.app",
+  "target": "/apps/terminal",
   "icon_path": "terminal.png"
 }
 ```
@@ -143,7 +144,7 @@ Fields:
         "id": "app-wechat",
         "kind": "application",
         "title": "微信",
-        "target": "/Applications/WeChat.app",
+        "target": "/apps/wechat",
         "icon_path": "wechat.png"
       },
       "score": 2180,
@@ -201,7 +202,7 @@ Fields:
         "id": "app-terminal",
         "kind": "application",
         "title": "Terminal",
-        "target": "/System/Applications/Utilities/Terminal.app",
+        "target": "/apps/terminal",
         "icon_path": "terminal.png"
       },
       "score": 300,
@@ -224,7 +225,7 @@ Record which search result the user finally opened.
     "id": "app-terminal",
     "kind": "application",
     "title": "Terminal",
-    "target": "/System/Applications/Utilities/Terminal.app",
+    "target": "/apps/terminal",
     "icon_path": "terminal.png"
   },
   "selected_rank": 1,
@@ -253,6 +254,50 @@ Important behavior:
 - The selection is stored in user operation logs.
 - The query-resource aggregate is updated so future similar searches can prioritize the selected resource.
 - The request must not be silently ignored.
+
+## Open resource
+
+Open an application, file, folder, or browser URL through a platform adapter.
+
+### Request
+
+```json
+{
+  "resource": {
+    "id": "app-terminal",
+    "kind": "application",
+    "title": "Terminal",
+    "target": "/apps/terminal",
+    "icon_path": "terminal.png"
+  },
+  "requested_at_millis": 300
+}
+```
+
+Fields:
+
+- `resource`: the resource object returned by `search` or `recommend`.
+- `requested_at_millis`: timestamp in milliseconds when the frontend requested opening the resource.
+
+### Success response data
+
+```json
+{
+  "api_version": "core-api-v1",
+  "opened": true,
+  "resource_id": "app-terminal",
+  "kind": "application",
+  "target": "/apps/terminal",
+  "opened_at_millis": 300
+}
+```
+
+Important behavior:
+
+- Core API does not directly execute OS commands.
+- Opening must go through a `ResourceOpener` platform adapter.
+- Dispatchers without a platform opener must return `CORE_PLATFORM_UNSUPPORTED`.
+- Platform adapters must validate targets and apply permission checks before invoking OS APIs.
 
 ## Privacy boundary
 
