@@ -1,9 +1,10 @@
 use serde_json::{json, Value};
 use speed_on_core::{
     ApiErrorResponse, ApiResource, ApiResourceKind, AppResult, CoreApi, IndexedResource,
-    IpcCommand, IpcRequest, JsonIpcDispatcher, JsonIpcDispatcherWithOpener,
-    OpenResourceOutcome, OpenResourceRequest, ResourceKind, ResourceOpener, ResourceRepository,
-    SearchAlias, SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
+    InstalledApplicationScanner, IpcCommand, IpcRequest, JsonIpcDispatcher,
+    JsonIpcDispatcherWithOpener, JsonIpcDispatcherWithScanner, OpenResourceOutcome,
+    OpenResourceRequest, ResourceKind, ResourceOpener, ResourceRepository, SearchAlias,
+    SearchAliasKind, SqliteStore, IPC_PROTOCOL_VERSION,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -43,6 +44,19 @@ fn resource() -> IndexedResource {
     }
 }
 
+fn scanned_resource() -> IndexedResource {
+    IndexedResource {
+        id: "app-notes".to_owned(),
+        kind: ResourceKind::Application,
+        title: "Notes".to_owned(),
+        target: "/apps/notes".to_owned(),
+        icon_path: Some("notes.png".to_owned()),
+        source: "mock_scanner".to_owned(),
+        first_seen_at_millis: 10,
+        last_seen_at_millis: 10,
+    }
+}
+
 fn store_with_terminal() -> SqliteStore {
     let mut store = ok(SqliteStore::open_in_memory_migrated());
     let indexed_resource = resource();
@@ -72,6 +86,14 @@ impl ResourceOpener for MockOpener {
             target: request.resource.target.clone(),
             opened_at_millis: request.requested_at_millis,
         })
+    }
+}
+
+struct MockScanner;
+
+impl InstalledApplicationScanner for MockScanner {
+    fn scan_installed_applications(&self) -> AppResult<Vec<IndexedResource>> {
+        Ok(vec![scanned_resource()])
     }
 }
 
@@ -120,6 +142,21 @@ fn ipc_open_resource_command_uses_stable_snake_case_name() {
     };
 
     assert_eq!(to_json(&request)["command"], json!("open_resource"));
+}
+
+#[test]
+fn ipc_refresh_applications_command_uses_stable_snake_case_name() {
+    // 场景：应用扫描命令必须在 IPC envelope 中稳定命名为 refresh_applications。
+    let request = IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-refresh".to_owned(),
+        command: IpcCommand::RefreshApplications,
+        payload: json!({
+            "requested_at_millis": 400
+        }),
+    };
+
+    assert_eq!(to_json(&request)["command"], json!("refresh_applications"));
 }
 
 #[test]
@@ -226,8 +263,47 @@ fn ipc_dispatcher_with_opener_executes_open_resource() {
     assert!(response.response.ok);
     let data = some(response.response.data);
     assert_eq!(data["opened"], json!(true));
+    assert_eq!(data["activity_recorded"], json!(true));
     assert_eq!(data["resource_id"], json!("app-terminal"));
     assert_eq!(data["opened_at_millis"], json!(300));
+}
+
+#[test]
+fn ipc_dispatcher_without_scanner_rejects_refresh_applications() {
+    // 场景：没有平台 scanner adapter 时，refresh_applications 不能假装成功。
+    let mut dispatcher = dispatcher_with_terminal();
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-refresh".to_owned(),
+        command: IpcCommand::RefreshApplications,
+        payload: json!({
+            "requested_at_millis": 400
+        }),
+    });
+
+    assert!(!response.response.ok);
+    let error = some(response.response.error);
+    assert_eq!(error.error_code, "CORE_PLATFORM_UNSUPPORTED");
+    assert_eq!(error.module, "ipc::JsonIpcDispatcher::refresh_applications");
+}
+
+#[test]
+fn ipc_dispatcher_with_scanner_executes_refresh_applications() {
+    // 场景：带 InstalledApplicationScanner 的 dispatcher 可以扫描应用并写入 SQLite 索引。
+    let mut dispatcher = JsonIpcDispatcherWithScanner::new(CoreApi::new(store_with_terminal()), MockScanner);
+    let response = dispatcher.dispatch(IpcRequest {
+        protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
+        request_id: "request-refresh".to_owned(),
+        command: IpcCommand::RefreshApplications,
+        payload: json!({
+            "requested_at_millis": 400
+        }),
+    });
+
+    assert!(response.response.ok);
+    let data = some(response.response.data);
+    assert_eq!(data["api_version"], json!("core-api-v1"));
+    assert_eq!(data["scanned_count"], json!(1));
 }
 
 #[test]
