@@ -1,8 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{IndexedResource, Recommendation, RecommendationRequest, ResourceKind};
+use crate::domain::{
+    IndexedResource, OpenResourceOutcome, OpenResourceRequest, Recommendation,
+    RecommendationRequest, ResourceKind,
+};
 use crate::error::AppError;
-use crate::ports::{ResourceRepository, SearchIndexRepository, UserOperationLogRepository};
+use crate::ports::{
+    ResourceOpener, ResourceRepository, SearchIndexRepository, UserOperationLogRepository,
+};
 use crate::search::{SearchMatchKind, SearchRequest, SearchResult, SearchService};
 use crate::service::RecommendationService;
 
@@ -238,6 +243,35 @@ pub struct ApiRecordSelectionResponse {
     pub recorded: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ApiOpenResourceRequest {
+    pub resource: ApiResource,
+    pub requested_at_millis: u64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ApiOpenResourceResponse {
+    pub api_version: String,
+    pub opened: bool,
+    pub resource_id: String,
+    pub kind: ApiResourceKind,
+    pub target: String,
+    pub opened_at_millis: u64,
+}
+
+impl From<OpenResourceOutcome> for ApiOpenResourceResponse {
+    fn from(outcome: OpenResourceOutcome) -> Self {
+        Self {
+            api_version: CORE_API_VERSION.to_owned(),
+            opened: true,
+            resource_id: outcome.resource_id,
+            kind: ApiResourceKind::from(outcome.kind),
+            target: outcome.target,
+            opened_at_millis: outcome.opened_at_millis,
+        }
+    }
+}
+
 pub struct CoreApi<R>
 where
     R: ResourceRepository + SearchIndexRepository + UserOperationLogRepository,
@@ -285,16 +319,11 @@ where
         &mut self,
         request: ApiRecordSelectionRequest,
     ) -> ApiResponse<ApiRecordSelectionResponse> {
-        let selected_resource = IndexedResource {
-            id: request.selected_resource.id,
-            kind: ResourceKind::from(request.selected_resource.kind),
-            title: request.selected_resource.title,
-            target: request.selected_resource.target,
-            icon_path: request.selected_resource.icon_path,
-            source: "api_selection".to_owned(),
-            first_seen_at_millis: request.opened_at_millis,
-            last_seen_at_millis: request.opened_at_millis,
-        };
+        let selected_resource = indexed_resource_from_api_resource(
+            request.selected_resource,
+            "api_selection",
+            request.opened_at_millis,
+        );
         let mut service = SearchService::new(&mut self.repository);
 
         match service.record_selection(
@@ -309,6 +338,46 @@ where
             }),
             Err(error) => ApiResponse::failure(error),
         }
+    }
+
+    pub fn open_resource_with<O>(
+        &mut self,
+        opener: &mut O,
+        request: ApiOpenResourceRequest,
+    ) -> ApiResponse<ApiOpenResourceResponse>
+    where
+        O: ResourceOpener,
+    {
+        let open_request = OpenResourceRequest::new(
+            indexed_resource_from_api_resource(
+                request.resource,
+                "api_open_resource",
+                request.requested_at_millis,
+            ),
+            request.requested_at_millis,
+        );
+
+        match opener.open_resource(&open_request) {
+            Ok(outcome) => ApiResponse::success(ApiOpenResourceResponse::from(outcome)),
+            Err(error) => ApiResponse::failure(error),
+        }
+    }
+}
+
+fn indexed_resource_from_api_resource(
+    resource: ApiResource,
+    source: impl Into<String>,
+    seen_at_millis: u64,
+) -> IndexedResource {
+    IndexedResource {
+        id: resource.id,
+        kind: ResourceKind::from(resource.kind),
+        title: resource.title,
+        target: resource.target,
+        icon_path: resource.icon_path,
+        source: source.into(),
+        first_seen_at_millis: seen_at_millis,
+        last_seen_at_millis: seen_at_millis,
     }
 }
 
