@@ -149,7 +149,10 @@ fn sqlite_search_candidates_include_aliases_usage_and_user_selection_signals() {
     assert_eq!(candidates[0].open_count, 1);
     assert_eq!(candidates[0].aliases.len(), 3);
     assert_eq!(candidates[0].user_selection_signals.len(), 1);
-    assert_eq!(candidates[0].user_selection_signals[0].normalized_query, "wx");
+    assert_eq!(
+        candidates[0].user_selection_signals[0].normalized_query,
+        "wx"
+    );
 }
 
 #[test]
@@ -189,13 +192,15 @@ fn sqlite_logs_user_searches_and_system_events() {
     // 场景：用户搜索日志和系统日志必须真实落库，并且分表统计。
     let mut store = ok(SqliteStore::open_in_memory_migrated());
 
-    ok(store.record_user_search(&speed_on_core::UserSearchLogEntry {
-        id: "search-1".to_owned(),
-        raw_query: " Term ".to_owned(),
-        normalized_query: "term".to_owned(),
-        result_count: 3,
-        searched_at_millis: 100,
-    }));
+    ok(
+        store.record_user_search(&speed_on_core::UserSearchLogEntry {
+            id: "search-1".to_owned(),
+            raw_query: " Term ".to_owned(),
+            normalized_query: "term".to_owned(),
+            result_count: 3,
+            searched_at_millis: 100,
+        }),
+    );
     ok(store.record_system_log(&SystemLogEntry::new(
         "system-1",
         LogLevel::Info,

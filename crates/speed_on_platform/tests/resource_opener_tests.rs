@@ -104,8 +104,13 @@ fn validator_allows_http_https_and_file_browser_urls() {
 #[test]
 fn validator_rejects_dangerous_browser_url_schemes() {
     // 场景：javascript/data 等 scheme 不能被浏览器 URL 打开入口接受。
-    for target in ["javascript:alert(1)", "data:text/html,hello", "ftp://example.test"] {
-        let error = match OpenTargetValidator::validate(&request(ResourceKind::BrowserUrl, target)) {
+    for target in [
+        "javascript:alert(1)",
+        "data:text/html,hello",
+        "ftp://example.test",
+    ] {
+        let error = match OpenTargetValidator::validate(&request(ResourceKind::BrowserUrl, target))
+        {
             Ok(()) => panic!("dangerous browser URL scheme should fail"),
             Err(error) => error,
         };
@@ -150,7 +155,8 @@ fn command_resource_opener_runs_planned_command_and_returns_outcome() {
     // 场景：opener 成功执行 runner 后，必须返回统一 OpenResourceOutcome。
     let runner = RecordingRunner::default();
     let mut opener = CommandResourceOpener::new(runner);
-    let outcome: OpenResourceOutcome = ok(opener.open_resource(&request(ResourceKind::File, "/tmp/file.txt")));
+    let outcome: OpenResourceOutcome =
+        ok(opener.open_resource(&request(ResourceKind::File, "/tmp/file.txt")));
 
     assert_eq!(outcome.resource_id, "resource-1");
     assert_eq!(outcome.kind, ResourceKind::File);

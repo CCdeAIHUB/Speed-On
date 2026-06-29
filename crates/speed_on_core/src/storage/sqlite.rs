@@ -75,11 +75,14 @@ impl SqliteStore {
         aliases: &[SearchAlias],
         created_at_millis: u64,
     ) -> AppResult<()> {
-        let tx = self.connection.transaction().map_err(|error| {
-            sqlite_error(error, "storage::SqliteStore::upsert_search_aliases")
-        })?;
-        let created_at =
-            u64_to_i64(created_at_millis, "storage::SqliteStore::upsert_search_aliases")?;
+        let tx = self
+            .connection
+            .transaction()
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::upsert_search_aliases"))?;
+        let created_at = u64_to_i64(
+            created_at_millis,
+            "storage::SqliteStore::upsert_search_aliases",
+        )?;
 
         for alias in aliases {
             let normalized_alias = normalize_search_query(&alias.value);
@@ -205,10 +208,9 @@ impl SqliteStore {
         );
         append_kind_filter(&mut sql, &kind_values);
 
-        let mut statement = self
-            .connection
-            .prepare(&sql)
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows"))?;
+        let mut statement = self.connection.prepare(&sql).map_err(|error| {
+            sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows")
+        })?;
         let rows = statement
             .query_map(params_from_iter(kind_values.iter()), |row| {
                 Ok(ResourceUsageRow {
@@ -224,7 +226,9 @@ impl SqliteStore {
                     last_opened_at_millis: row.get(9)?,
                 })
             })
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows"))?;
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_resource_usage_rows")
+            })?;
 
         let mut resources = Vec::new();
         for row in rows {
@@ -248,19 +252,26 @@ impl SqliteStore {
                 ORDER BY alias_kind, alias_text
                 "#,
             )
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resource"))?;
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_aliases_for_resource")
+            })?;
         let rows = statement
             .query_map(params![resource_id], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
             })
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resource"))?;
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_aliases_for_resource")
+            })?;
 
         let mut aliases = Vec::new();
         for row in rows {
             let (kind, value) = row.map_err(|error| {
                 sqlite_error(error, "storage::SqliteStore::load_aliases_for_resource")
             })?;
-            aliases.push(SearchAlias::new(SearchAliasKind::try_from(kind.as_str())?, value));
+            aliases.push(SearchAlias::new(
+                SearchAliasKind::try_from(kind.as_str())?,
+                value,
+            ));
         }
 
         Ok(aliases)
@@ -282,7 +293,10 @@ impl SqliteStore {
                 "#,
             )
             .map_err(|error| {
-                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resource")
+                sqlite_error(
+                    error,
+                    "storage::SqliteStore::load_selection_signals_for_resource",
+                )
             })?;
         let rows = statement
             .query_map(params![resource_id], |row| {
@@ -293,14 +307,21 @@ impl SqliteStore {
                 ))
             })
             .map_err(|error| {
-                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resource")
+                sqlite_error(
+                    error,
+                    "storage::SqliteStore::load_selection_signals_for_resource",
+                )
             })?;
 
         let mut signals = Vec::new();
         for row in rows {
-            let (normalized_query, selection_count, last_selected_at_millis) = row.map_err(|error| {
-                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resource")
-            })?;
+            let (normalized_query, selection_count, last_selected_at_millis) =
+                row.map_err(|error| {
+                    sqlite_error(
+                        error,
+                        "storage::SqliteStore::load_selection_signals_for_resource",
+                    )
+                })?;
             signals.push(UserSelectionSignal {
                 normalized_query,
                 selection_count: i64_to_u64(
@@ -339,10 +360,9 @@ impl SqliteStore {
             ORDER BY resource_id, alias_kind, alias_text
             "#
         );
-        let mut statement = self
-            .connection
-            .prepare(&sql)
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources"))?;
+        let mut statement = self.connection.prepare(&sql).map_err(|error| {
+            sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources")
+        })?;
         let rows = statement
             .query_map(params_from_iter(resource_ids.iter()), |row| {
                 Ok((
@@ -351,7 +371,9 @@ impl SqliteStore {
                     row.get::<_, String>(2)?,
                 ))
             })
-            .map_err(|error| sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources"))?;
+            .map_err(|error| {
+                sqlite_error(error, "storage::SqliteStore::load_aliases_for_resources")
+            })?;
 
         for row in rows {
             let (resource_id, kind, value) = row.map_err(|error| {
@@ -383,12 +405,12 @@ impl SqliteStore {
             ORDER BY resource_id, selection_count DESC, last_selected_at_millis DESC
             "#
         );
-        let mut statement = self
-            .connection
-            .prepare(&sql)
-            .map_err(|error| {
-                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
-            })?;
+        let mut statement = self.connection.prepare(&sql).map_err(|error| {
+            sqlite_error(
+                error,
+                "storage::SqliteStore::load_selection_signals_for_resources",
+            )
+        })?;
         let rows = statement
             .query_map(params_from_iter(resource_ids.iter()), |row| {
                 Ok((
@@ -399,25 +421,33 @@ impl SqliteStore {
                 ))
             })
             .map_err(|error| {
-                sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
+                sqlite_error(
+                    error,
+                    "storage::SqliteStore::load_selection_signals_for_resources",
+                )
             })?;
 
         for row in rows {
             let (resource_id, normalized_query, selection_count, last_selected_at_millis) = row
                 .map_err(|error| {
-                    sqlite_error(error, "storage::SqliteStore::load_selection_signals_for_resources")
+                    sqlite_error(
+                        error,
+                        "storage::SqliteStore::load_selection_signals_for_resources",
+                    )
                 })?;
-            map.entry(resource_id).or_default().push(UserSelectionSignal {
-                normalized_query,
-                selection_count: i64_to_u64(
-                    selection_count,
-                    "storage::SqliteStore::load_selection_signals_for_resources",
-                )?,
-                last_selected_at_millis: i64_to_u64(
-                    last_selected_at_millis,
-                    "storage::SqliteStore::load_selection_signals_for_resources",
-                )?,
-            });
+            map.entry(resource_id)
+                .or_default()
+                .push(UserSelectionSignal {
+                    normalized_query,
+                    selection_count: i64_to_u64(
+                        selection_count,
+                        "storage::SqliteStore::load_selection_signals_for_resources",
+                    )?,
+                    last_selected_at_millis: i64_to_u64(
+                        last_selected_at_millis,
+                        "storage::SqliteStore::load_selection_signals_for_resources",
+                    )?,
+                });
         }
 
         Ok(map)
@@ -426,9 +456,10 @@ impl SqliteStore {
 
 impl ResourceRepository for SqliteStore {
     fn upsert_resources(&mut self, resources: &[IndexedResource]) -> AppResult<()> {
-        let tx = self.connection.transaction().map_err(|error| {
-            sqlite_error(error, "storage::SqliteStore::upsert_resources")
-        })?;
+        let tx = self
+            .connection
+            .transaction()
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::upsert_resources"))?;
 
         for resource in resources {
             tx.execute(
@@ -451,8 +482,14 @@ impl ResourceRepository for SqliteStore {
                     resource.target.as_str(),
                     resource.icon_path.as_deref(),
                     resource.source.as_str(),
-                    u64_to_i64(resource.first_seen_at_millis, "storage::SqliteStore::upsert_resources")?,
-                    u64_to_i64(resource.last_seen_at_millis, "storage::SqliteStore::upsert_resources")?,
+                    u64_to_i64(
+                        resource.first_seen_at_millis,
+                        "storage::SqliteStore::upsert_resources"
+                    )?,
+                    u64_to_i64(
+                        resource.last_seen_at_millis,
+                        "storage::SqliteStore::upsert_resources"
+                    )?,
                 ],
             )
             .map_err(|error| sqlite_error(error, "storage::SqliteStore::upsert_resources"))?;
@@ -463,11 +500,14 @@ impl ResourceRepository for SqliteStore {
     }
 
     fn record_activity(&mut self, activity: &ActivityRecord) -> AppResult<()> {
-        let tx = self.connection.transaction().map_err(|error| {
-            sqlite_error(error, "storage::SqliteStore::record_activity")
-        })?;
-        let opened_at =
-            u64_to_i64(activity.opened_at_millis, "storage::SqliteStore::record_activity")?;
+        let tx = self
+            .connection
+            .transaction()
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_activity"))?;
+        let opened_at = u64_to_i64(
+            activity.opened_at_millis,
+            "storage::SqliteStore::record_activity",
+        )?;
 
         tx.execute(
             r#"
@@ -555,12 +595,8 @@ impl SearchIndexRepository for SqliteStore {
                 row.last_opened_at_millis,
                 "storage::SqliteStore::load_search_candidates",
             )?;
-            let aliases = aliases_by_resource
-                .remove(&resource.id)
-                .unwrap_or_default();
-            let signals = signals_by_resource
-                .remove(&resource.id)
-                .unwrap_or_default();
+            let aliases = aliases_by_resource.remove(&resource.id).unwrap_or_default();
+            let signals = signals_by_resource.remove(&resource.id).unwrap_or_default();
 
             candidates.push(
                 SearchCandidate::new(resource)
@@ -587,8 +623,14 @@ impl UserOperationLogRepository for SqliteStore {
                     entry.id.as_str(),
                     entry.raw_query.as_str(),
                     entry.normalized_query.as_str(),
-                    usize_to_i64(entry.result_count, "storage::SqliteStore::record_user_search")?,
-                    u64_to_i64(entry.searched_at_millis, "storage::SqliteStore::record_user_search")?,
+                    usize_to_i64(
+                        entry.result_count,
+                        "storage::SqliteStore::record_user_search"
+                    )?,
+                    u64_to_i64(
+                        entry.searched_at_millis,
+                        "storage::SqliteStore::record_user_search"
+                    )?,
                 ],
             )
             .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_user_search"))?;
@@ -596,9 +638,10 @@ impl UserOperationLogRepository for SqliteStore {
     }
 
     fn record_user_selection(&mut self, entry: &UserSelectionLogEntry) -> AppResult<()> {
-        let tx = self.connection.transaction().map_err(|error| {
-            sqlite_error(error, "storage::SqliteStore::record_user_selection")
-        })?;
+        let tx = self
+            .connection
+            .transaction()
+            .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_user_selection"))?;
         let opened_at = u64_to_i64(
             entry.opened_at_millis,
             "storage::SqliteStore::record_user_selection",
@@ -619,7 +662,10 @@ impl UserOperationLogRepository for SqliteStore {
                 entry.selected_kind.as_str(),
                 entry.selected_title.as_str(),
                 entry.selected_target.as_str(),
-                usize_to_i64(entry.selected_rank, "storage::SqliteStore::record_user_selection")?,
+                usize_to_i64(
+                    entry.selected_rank,
+                    "storage::SqliteStore::record_user_selection"
+                )?,
                 opened_at,
             ],
         )
@@ -664,7 +710,10 @@ impl SystemLogSink for SqliteStore {
                     entry.message.as_str(),
                     entry.context_summary.as_deref(),
                     entry.trace_id.as_deref(),
-                    u64_to_i64(entry.occurred_at_millis, "storage::SqliteStore::record_system_log")?,
+                    u64_to_i64(
+                        entry.occurred_at_millis,
+                        "storage::SqliteStore::record_system_log"
+                    )?,
                 ],
             )
             .map_err(|error| sqlite_error(error, "storage::SqliteStore::record_system_log"))?;
@@ -723,7 +772,13 @@ fn append_kind_filter(sql: &mut String, kind_values: &[String]) {
 /// Build a comma-separated list of `?` placeholders for use in `IN (...)` clauses.
 fn build_placeholders(count: usize) -> String {
     (0..count)
-        .map(|index| if index == 0 { "?".to_owned() } else { ", ?".to_owned() })
+        .map(|index| {
+            if index == 0 {
+                "?".to_owned()
+            } else {
+                ", ?".to_owned()
+            }
+        })
         .collect()
 }
 
@@ -734,8 +789,15 @@ fn kind_filter_values(kinds: Option<&[ResourceKind]>) -> Vec<String> {
     }
 }
 
-fn build_alias_id(resource_id: &str, alias_kind: SearchAliasKind, normalized_alias: &str) -> String {
-    format!("alias-{resource_id}-{}-{normalized_alias}", alias_kind.as_str())
+fn build_alias_id(
+    resource_id: &str,
+    alias_kind: SearchAliasKind,
+    normalized_alias: &str,
+) -> String {
+    format!(
+        "alias-{resource_id}-{}-{normalized_alias}",
+        alias_kind.as_str()
+    )
 }
 
 fn sqlite_error(error: rusqlite::Error, module: &str) -> AppError {

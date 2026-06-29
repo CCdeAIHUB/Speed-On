@@ -17,7 +17,10 @@ where
     S: InstalledApplicationScanner,
 {
     pub fn new(repository: R, scanner: S) -> Self {
-        Self { repository, scanner }
+        Self {
+            repository,
+            scanner,
+        }
     }
 
     pub fn refresh_installed_application_resources(mut self) -> AppResult<Vec<IndexedResource>> {

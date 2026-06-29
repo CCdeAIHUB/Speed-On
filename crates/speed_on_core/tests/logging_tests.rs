@@ -17,7 +17,10 @@ fn system_log_entry_keeps_sanitized_runtime_context() {
     assert_eq!(log.level, LogLevel::Error);
     assert_eq!(log.module, "search::SearchService");
     assert_eq!(log.message, "failed to load search candidates");
-    assert_eq!(log.context_summary.as_deref(), Some("candidate_count=unknown; storage=sqlite"));
+    assert_eq!(
+        log.context_summary.as_deref(),
+        Some("candidate_count=unknown; storage=sqlite")
+    );
     assert_eq!(log.trace_id.as_deref(), Some("trace-1"));
 }
 

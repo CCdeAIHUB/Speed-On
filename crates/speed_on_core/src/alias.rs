@@ -75,8 +75,18 @@ where
         // Title and target aliases are the minimum search contract for every
         // indexed resource. They let newly scanned applications become searchable
         // immediately, before optional pinyin/browser metadata builders run.
-        push_unique_alias(&mut aliases, &mut seen, SearchAliasKind::Title, &resource.title);
-        push_unique_alias(&mut aliases, &mut seen, SearchAliasKind::Target, &resource.target);
+        push_unique_alias(
+            &mut aliases,
+            &mut seen,
+            SearchAliasKind::Title,
+            &resource.title,
+        );
+        push_unique_alias(
+            &mut aliases,
+            &mut seen,
+            SearchAliasKind::Target,
+            &resource.target,
+        );
 
         let pinyin_aliases = self.pinyin_provider.aliases_for_title(&resource.title);
         if let Some(full) = pinyin_aliases.full {

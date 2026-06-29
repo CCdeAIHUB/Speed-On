@@ -118,7 +118,10 @@ where
 /// aliases, usage counters, and user-selection signals from SQLite. The search
 /// service consumes this prebuilt view and does not know how SQLite stores it.
 pub trait SearchIndexRepository {
-    fn load_search_candidates(&self, kinds: Option<&[ResourceKind]>) -> AppResult<Vec<SearchCandidate>>;
+    fn load_search_candidates(
+        &self,
+        kinds: Option<&[ResourceKind]>,
+    ) -> AppResult<Vec<SearchCandidate>>;
 }
 
 /// User operation log boundary.

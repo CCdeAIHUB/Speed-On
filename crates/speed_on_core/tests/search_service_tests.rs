@@ -2,10 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use speed_on_core::{
-    ActivityRecord, AppResult, CandidateResource, IndexedResource, ResourceKind,
-    SearchAlias, SearchAliasKind, SearchCandidate, SearchIndexRepository, SearchMatchKind,
-    SearchRequest, SearchService, UserOperationLogRepository, UserSearchLogEntry,
-    UserSelectionLogEntry, UserSelectionSignal,
+    ActivityRecord, AppResult, CandidateResource, IndexedResource, ResourceKind, SearchAlias,
+    SearchAliasKind, SearchCandidate, SearchIndexRepository, SearchMatchKind, SearchRequest,
+    SearchService, UserOperationLogRepository, UserSearchLogEntry, UserSelectionLogEntry,
+    UserSelectionSignal,
 };
 
 #[derive(Clone)]
@@ -106,7 +106,10 @@ fn search_matches_title_target_and_browser_title_aliases() {
     );
     let browser_candidate = SearchCandidate::new(browser_resource).with_aliases(vec![
         SearchAlias::new(SearchAliasKind::Target, "https://www.rust-lang.org/learn"),
-        SearchAlias::new(SearchAliasKind::BrowserTitle, "Rust Programming Language Learn"),
+        SearchAlias::new(
+            SearchAliasKind::BrowserTitle,
+            "Rust Programming Language Learn",
+        ),
     ]);
     let file_candidate = SearchCandidate::new(resource(
         "file-report",
@@ -197,7 +200,10 @@ fn search_deduplicates_when_history_and_alias_match_same_resource() {
         "Visual Studio Code",
         "/Applications/Visual Studio Code.app",
     ))
-    .with_aliases(vec![SearchAlias::new(SearchAliasKind::Title, "Visual Studio Code")])
+    .with_aliases(vec![SearchAlias::new(
+        SearchAliasKind::Title,
+        "Visual Studio Code",
+    )])
     .with_user_selection_signals(vec![UserSelectionSignal {
         normalized_query: "vscode".to_owned(),
         selection_count: 1,
@@ -265,7 +271,10 @@ fn record_selection_logs_final_user_choice() {
     assert_eq!(logs[0].selected_resource_id, "app-terminal");
     assert_eq!(logs[0].selected_kind, ResourceKind::Application);
     assert_eq!(logs[0].selected_title, "Terminal");
-    assert_eq!(logs[0].selected_target, "/System/Applications/Utilities/Terminal.app");
+    assert_eq!(
+        logs[0].selected_target,
+        "/System/Applications/Utilities/Terminal.app"
+    );
     assert_eq!(logs[0].selected_rank, 1);
 }
 

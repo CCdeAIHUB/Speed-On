@@ -120,12 +120,16 @@ fn read_database_path_arg(value: Option<String>) -> StdioResult<String> {
     }
 }
 
-pub fn open_default_dispatcher(config: &StdioConfig) -> StdioResult<JsonIpcDispatcher<SqliteStore>> {
+pub fn open_default_dispatcher(
+    config: &StdioConfig,
+) -> StdioResult<JsonIpcDispatcher<SqliteStore>> {
     let store = open_store(config, "ipc_stdio::open_default_dispatcher")?;
     Ok(JsonIpcDispatcher::new(CoreApi::new(store)))
 }
 
-pub fn open_command_opener_dispatcher(config: &StdioConfig) -> StdioResult<CommandOpenerDispatcher> {
+pub fn open_command_opener_dispatcher(
+    config: &StdioConfig,
+) -> StdioResult<CommandOpenerDispatcher> {
     let store = open_store(config, "ipc_stdio::open_command_opener_dispatcher")?;
     Ok(JsonIpcDispatcherWithOpener::new(
         CoreApi::new(store),
@@ -133,7 +137,9 @@ pub fn open_command_opener_dispatcher(config: &StdioConfig) -> StdioResult<Comma
     ))
 }
 
-pub fn open_application_scanner_dispatcher(config: &StdioConfig) -> StdioResult<ApplicationScannerDispatcher> {
+pub fn open_application_scanner_dispatcher(
+    config: &StdioConfig,
+) -> StdioResult<ApplicationScannerDispatcher> {
     let store = open_store(config, "ipc_stdio::open_application_scanner_dispatcher")?;
     Ok(JsonIpcDispatcherWithScanner::new(
         CoreApi::new(store),
@@ -151,12 +157,14 @@ pub fn open_full_platform_dispatcher(config: &StdioConfig) -> StdioResult<FullPl
 }
 
 fn current_millis() -> StdioResult<u64> {
-    let duration = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|error| {
-        StdioTransportError::io_failure(
-            format!("failed to read system time: {error}"),
-            "ipc_stdio::current_millis",
-        )
-    })?;
+    let duration = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| {
+            StdioTransportError::io_failure(
+                format!("failed to read system time: {error}"),
+                "ipc_stdio::current_millis",
+            )
+        })?;
     Ok(duration.as_millis() as u64)
 }
 
@@ -166,7 +174,11 @@ fn open_store(config: &StdioConfig, module: &'static str) -> StdioResult<SqliteS
     })
 }
 
-pub fn run_json_lines_transport<R, W, D>(reader: R, mut writer: W, dispatcher: &mut D) -> StdioResult<()>
+pub fn run_json_lines_transport<R, W, D>(
+    reader: R,
+    mut writer: W,
+    dispatcher: &mut D,
+) -> StdioResult<()>
 where
     R: BufRead,
     W: Write,
@@ -270,7 +282,9 @@ where
 {
     match serde_json::to_value(response) {
         Ok(value) => value,
-        Err(error) => malformed_envelope_error(format!("failed to encode dispatch response: {error}")),
+        Err(error) => {
+            malformed_envelope_error(format!("failed to encode dispatch response: {error}"))
+        }
     }
 }
 

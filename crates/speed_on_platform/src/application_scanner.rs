@@ -2,7 +2,9 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use speed_on_core::{AppError, AppResult, IndexedResource, InstalledApplicationScanner, ResourceKind};
+use speed_on_core::{
+    AppError, AppResult, IndexedResource, InstalledApplicationScanner, ResourceKind,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApplicationScanRoots {
@@ -50,7 +52,9 @@ impl InstalledApplicationScanner for PlatformApplicationScanner {
     }
 }
 
-pub fn scan_applications_from_roots(roots: &ApplicationScanRoots) -> AppResult<Vec<IndexedResource>> {
+pub fn scan_applications_from_roots(
+    roots: &ApplicationScanRoots,
+) -> AppResult<Vec<IndexedResource>> {
     let mut resources = Vec::new();
     let mut seen_targets = HashSet::new();
 
@@ -61,7 +65,11 @@ pub fn scan_applications_from_roots(roots: &ApplicationScanRoots) -> AppResult<V
         scan_root(root, roots, &mut seen_targets, &mut resources)?;
     }
 
-    resources.sort_by(|left, right| left.title.cmp(&right.title).then(left.target.cmp(&right.target)));
+    resources.sort_by(|left, right| {
+        left.title
+            .cmp(&right.title)
+            .then(left.target.cmp(&right.target))
+    });
     Ok(resources)
 }
 
@@ -90,7 +98,11 @@ fn scan_root(
         let path = entry.path();
         if path.is_dir() {
             if roots.os == "macos" && has_extension(&path, "app") {
-                push_unique(make_macos_app_resource(&path, roots.now_millis), seen_targets, resources);
+                push_unique(
+                    make_macos_app_resource(&path, roots.now_millis),
+                    seen_targets,
+                    resources,
+                );
             } else {
                 scan_root(&path, roots, seen_targets, resources)?;
             }
@@ -107,17 +119,20 @@ fn scan_root(
 
 fn resource_from_file(path: &Path, roots: &ApplicationScanRoots) -> Option<IndexedResource> {
     match roots.os.as_str() {
-        "linux" if has_extension(path, "desktop") => parse_linux_desktop_entry(path, roots.now_millis),
-        "windows" if has_extension(path, "lnk") || has_extension(path, "exe") => {
-            Some(make_file_resource(path, "windows_app_file", roots.now_millis))
+        "linux" if has_extension(path, "desktop") => {
+            parse_linux_desktop_entry(path, roots.now_millis)
         }
+        "windows" if has_extension(path, "lnk") || has_extension(path, "exe") => Some(
+            make_file_resource(path, "windows_app_file", roots.now_millis),
+        ),
         _ => None,
     }
 }
 
 fn parse_linux_desktop_entry(path: &Path, now_millis: u64) -> Option<IndexedResource> {
     let content = fs::read_to_string(path).ok()?;
-    if desktop_value(&content, "NoDisplay").is_some_and(|value| value.eq_ignore_ascii_case("true")) {
+    if desktop_value(&content, "NoDisplay").is_some_and(|value| value.eq_ignore_ascii_case("true"))
+    {
         return None;
     }
     if desktop_value(&content, "Hidden").is_some_and(|value| value.eq_ignore_ascii_case("true")) {

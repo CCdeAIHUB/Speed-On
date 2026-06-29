@@ -19,8 +19,12 @@ fn builder_creates_title_and_target_entries() {
     let entries = builder.aliases_for_resource(&app_resource());
 
     assert_eq!(entries.len(), 2);
-    assert!(entries.iter().any(|entry| entry.kind == SearchAliasKind::Title));
-    assert!(entries.iter().any(|entry| entry.kind == SearchAliasKind::Target));
+    assert!(entries
+        .iter()
+        .any(|entry| entry.kind == SearchAliasKind::Title));
+    assert!(entries
+        .iter()
+        .any(|entry| entry.kind == SearchAliasKind::Target));
 }
 
 #[test]
@@ -44,6 +48,10 @@ fn builder_generates_pinyin_aliases_for_chinese_titles() {
     assert_eq!(entries.len(), 4);
     assert!(entries.iter().any(|e| e.kind == SearchAliasKind::Title));
     assert!(entries.iter().any(|e| e.kind == SearchAliasKind::Target));
-    assert!(entries.iter().any(|e| e.kind == SearchAliasKind::PinyinFull && e.value == "weixin"));
-    assert!(entries.iter().any(|e| e.kind == SearchAliasKind::PinyinInitials && e.value == "wx"));
+    assert!(entries
+        .iter()
+        .any(|e| e.kind == SearchAliasKind::PinyinFull && e.value == "weixin"));
+    assert!(entries
+        .iter()
+        .any(|e| e.kind == SearchAliasKind::PinyinInitials && e.value == "wx"));
 }

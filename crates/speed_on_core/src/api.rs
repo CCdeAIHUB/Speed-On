@@ -130,10 +130,14 @@ pub struct ApiSearchRequest {
 
 impl From<ApiSearchRequest> for SearchRequest {
     fn from(request: ApiSearchRequest) -> Self {
-        let mut search_request = SearchRequest::new(request.query, request.limit, request.now_millis);
+        let mut search_request =
+            SearchRequest::new(request.query, request.limit, request.now_millis);
         if let Some(kinds) = request.kinds {
             search_request = search_request.with_kinds(
-                kinds.into_iter().map(ResourceKind::from).collect::<Vec<_>>(),
+                kinds
+                    .into_iter()
+                    .map(ResourceKind::from)
+                    .collect::<Vec<_>>(),
             );
         }
         search_request
@@ -200,10 +204,14 @@ pub struct ApiRecommendationRequest {
 
 impl From<ApiRecommendationRequest> for RecommendationRequest {
     fn from(request: ApiRecommendationRequest) -> Self {
-        let mut recommendation_request = RecommendationRequest::new(request.limit, request.now_millis);
+        let mut recommendation_request =
+            RecommendationRequest::new(request.limit, request.now_millis);
         if let Some(kinds) = request.kinds {
             recommendation_request = recommendation_request.with_kinds(
-                kinds.into_iter().map(ResourceKind::from).collect::<Vec<_>>(),
+                kinds
+                    .into_iter()
+                    .map(ResourceKind::from)
+                    .collect::<Vec<_>>(),
             );
         }
         recommendation_request
@@ -292,7 +300,10 @@ pub struct ApiRefreshApplicationsResponse {
 
 pub struct CoreApi<R>
 where
-    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository
+        + SearchAliasRepository
+        + SearchIndexRepository
+        + UserOperationLogRepository,
 {
     repository: R,
     pinyin_provider: Box<dyn PinyinAliasProvider>,
@@ -300,7 +311,10 @@ where
 
 impl<R> CoreApi<R>
 where
-    R: ResourceRepository + SearchAliasRepository + SearchIndexRepository + UserOperationLogRepository,
+    R: ResourceRepository
+        + SearchAliasRepository
+        + SearchIndexRepository
+        + UserOperationLogRepository,
 {
     pub fn new(repository: R) -> Self {
         Self {
@@ -314,10 +328,7 @@ where
     /// This satisfies the architecture rule that pinyin conversion must stay
     /// behind `PinyinAliasProvider` so it can be replaced or enhanced without
     /// rewriting search ranking or alias generation.
-    pub fn with_pinyin_provider(
-        repository: R,
-        provider: Box<dyn PinyinAliasProvider>,
-    ) -> Self {
+    pub fn with_pinyin_provider(repository: R, provider: Box<dyn PinyinAliasProvider>) -> Self {
         Self {
             repository,
             pinyin_provider: provider,
@@ -403,7 +414,10 @@ where
                 // nothing was launched.  Instead we report success with
                 // `activity_recorded = false`.
                 let activity_recorded = self.repository.record_activity(&activity).is_ok();
-                ApiResponse::success(ApiOpenResourceResponse::from_outcome(outcome, activity_recorded))
+                ApiResponse::success(ApiOpenResourceResponse::from_outcome(
+                    outcome,
+                    activity_recorded,
+                ))
             }
             Err(error) => ApiResponse::failure(error),
         }
@@ -422,14 +436,16 @@ where
         // silently leaving scanned applications unsearchable.
         let mut service = IndexService::new(&mut self.repository, scanner);
         match service.refresh_installed_application_resources() {
-            Ok(resources) => match self.write_generated_aliases(&resources, request.requested_at_millis) {
-                Ok(alias_count) => ApiResponse::success(ApiRefreshApplicationsResponse {
-                    api_version: CORE_API_VERSION.to_owned(),
-                    scanned_count: resources.len(),
-                    alias_count,
-                }),
-                Err(error) => ApiResponse::failure(error),
-            },
+            Ok(resources) => {
+                match self.write_generated_aliases(&resources, request.requested_at_millis) {
+                    Ok(alias_count) => ApiResponse::success(ApiRefreshApplicationsResponse {
+                        api_version: CORE_API_VERSION.to_owned(),
+                        scanned_count: resources.len(),
+                        alias_count,
+                    }),
+                    Err(error) => ApiResponse::failure(error),
+                }
+            }
             Err(error) => ApiResponse::failure(error),
         }
     }
@@ -457,7 +473,10 @@ fn activity_record_from_open_outcome(outcome: &OpenResourceOutcome) -> ActivityR
     static ACTIVITY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
     let seq = ACTIVITY_SEQUENCE.fetch_add(1, Ordering::Relaxed);
     ActivityRecord {
-        id: format!("open-{}-{}-{}", outcome.opened_at_millis, seq, outcome.resource_id),
+        id: format!(
+            "open-{}-{}-{}",
+            outcome.opened_at_millis, seq, outcome.resource_id
+        ),
         resource_id: Some(outcome.resource_id.clone()),
         kind: outcome.kind,
         target: outcome.target.clone(),
@@ -491,7 +510,10 @@ where
         (**self).upsert_resources(resources)
     }
 
-    fn record_activity(&mut self, activity: &crate::domain::ActivityRecord) -> crate::error::AppResult<()> {
+    fn record_activity(
+        &mut self,
+        activity: &crate::domain::ActivityRecord,
+    ) -> crate::error::AppResult<()> {
         (**self).record_activity(activity)
     }
 
@@ -519,11 +541,17 @@ impl<T> UserOperationLogRepository for &mut T
 where
     T: UserOperationLogRepository,
 {
-    fn record_user_search(&mut self, entry: &crate::logging::UserSearchLogEntry) -> crate::error::AppResult<()> {
+    fn record_user_search(
+        &mut self,
+        entry: &crate::logging::UserSearchLogEntry,
+    ) -> crate::error::AppResult<()> {
         (**self).record_user_search(entry)
     }
 
-    fn record_user_selection(&mut self, entry: &crate::logging::UserSelectionLogEntry) -> crate::error::AppResult<()> {
+    fn record_user_selection(
+        &mut self,
+        entry: &crate::logging::UserSelectionLogEntry,
+    ) -> crate::error::AppResult<()> {
         (**self).record_user_selection(entry)
     }
 }
@@ -539,7 +567,10 @@ where
         ))
     }
 
-    fn record_activity(&mut self, _activity: &crate::domain::ActivityRecord) -> crate::error::AppResult<()> {
+    fn record_activity(
+        &mut self,
+        _activity: &crate::domain::ActivityRecord,
+    ) -> crate::error::AppResult<()> {
         Err(AppError::invalid_argument(
             "cannot write through shared repository reference",
             "api::CoreApi",

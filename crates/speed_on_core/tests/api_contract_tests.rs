@@ -3,11 +3,11 @@ use speed_on_core::{
     ActivityRecord, ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecommendationResult,
     ApiRecordSelectionRequest, ApiRefreshApplicationsRequest, ApiResource, ApiResourceKind,
     ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResult, AppError, AppResult,
-    CandidateResource, CoreApi, IndexedResource, InstalledApplicationScanner,
-    OpenResourceOutcome, OpenResourceRequest, Recommendation, ResourceKind, ResourceOpener,
-    ResourceRepository, SearchAlias, SearchAliasKind, SearchAliasRepository, SearchCandidate,
-    SearchIndexRepository, SearchMatchKind, SearchResult, SqliteStore, UserOperationLogRepository,
-    UserSearchLogEntry, UserSelectionLogEntry,
+    CandidateResource, CoreApi, IndexedResource, InstalledApplicationScanner, OpenResourceOutcome,
+    OpenResourceRequest, Recommendation, ResourceKind, ResourceOpener, ResourceRepository,
+    SearchAlias, SearchAliasKind, SearchAliasRepository, SearchCandidate, SearchIndexRepository,
+    SearchMatchKind, SearchResult, SqliteStore, UserOperationLogRepository, UserSearchLogEntry,
+    UserSelectionLogEntry,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -130,7 +130,10 @@ fn api_error_response_hides_internal_cause() {
 
     assert_eq!(serialized["ok"], json!(false));
     assert_eq!(serialized["data"], json!(null));
-    assert_eq!(serialized["error"]["error_code"], json!("CORE_STORAGE_FAILURE"));
+    assert_eq!(
+        serialized["error"]["error_code"],
+        json!("CORE_STORAGE_FAILURE")
+    );
     assert_eq!(serialized["error"]["module"], json!("storage::SqliteStore"));
     assert_eq!(serialized["error"]["trace_id"], json!("trace-1"));
     assert!(serialized["error"].get("cause").is_none());
@@ -142,7 +145,10 @@ fn search_request_contract_uses_snake_case_resource_kinds() {
     let request = ApiSearchRequest {
         query: "wx".to_owned(),
         limit: 5,
-        kinds: Some(vec![ApiResourceKind::Application, ApiResourceKind::BrowserUrl]),
+        kinds: Some(vec![
+            ApiResourceKind::Application,
+            ApiResourceKind::BrowserUrl,
+        ]),
         now_millis: 100,
     };
 

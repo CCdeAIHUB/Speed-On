@@ -241,7 +241,11 @@ fn json_lines_transport_writes_one_response_per_request_line() {
     let mut output = Vec::new();
     let mut dispatcher = EchoDispatcher;
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("r1"));
@@ -259,7 +263,11 @@ fn json_lines_transport_skips_empty_lines() {
     let mut output = Vec::new();
     let mut dispatcher = EchoDispatcher;
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let text = match std::str::from_utf8(&output) {
         Ok(text) => text,
@@ -275,7 +283,11 @@ fn json_lines_transport_returns_transport_error_for_malformed_envelope() {
     let mut output = Vec::new();
     let mut dispatcher = EchoDispatcher;
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!(null));
@@ -295,7 +307,11 @@ fn json_lines_transport_can_drive_real_core_search() {
     let mut output = Vec::new();
     let mut dispatcher = real_dispatcher();
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("search-1"));
@@ -314,7 +330,11 @@ fn json_lines_transport_reports_open_resource_unsupported_when_command_opener_is
     let mut output = Vec::new();
     let mut dispatcher = real_dispatcher();
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("open-1"));
@@ -333,13 +353,20 @@ fn json_lines_transport_can_drive_open_resource_when_command_opener_is_enabled()
     let mut output = Vec::new();
     let mut dispatcher = command_opener_dispatcher();
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("open-1"));
     assert_eq!(response["response"]["ok"], json!(true));
     assert_eq!(response["response"]["data"]["opened"], json!(true));
-    assert_eq!(response["response"]["data"]["activity_recorded"], json!(true));
+    assert_eq!(
+        response["response"]["data"]["activity_recorded"],
+        json!(true)
+    );
 }
 
 #[test]
@@ -350,7 +377,11 @@ fn json_lines_transport_reports_refresh_applications_unsupported_when_scan_is_di
     let mut output = Vec::new();
     let mut dispatcher = real_dispatcher();
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("refresh-1"));
@@ -369,7 +400,11 @@ fn json_lines_transport_can_drive_refresh_applications_when_scan_is_enabled() {
     let mut output = Vec::new();
     let mut dispatcher = scanner_dispatcher();
 
-    ok(run_json_lines_transport(Cursor::new(input), &mut output, &mut dispatcher));
+    ok(run_json_lines_transport(
+        Cursor::new(input),
+        &mut output,
+        &mut dispatcher,
+    ));
 
     let response = parse_json_line(&output);
     assert_eq!(response["request_id"], json!("refresh-1"));

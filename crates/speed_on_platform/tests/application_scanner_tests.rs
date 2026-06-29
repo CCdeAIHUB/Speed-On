@@ -109,8 +109,12 @@ fn windows_scanner_reads_lnk_and_exe_files() {
 
     assert_eq!(resources.len(), 2);
     assert_eq!(resources[0].kind, ResourceKind::Application);
-    assert!(resources.iter().any(|resource| resource.title == "Terminal.lnk"));
-    assert!(resources.iter().any(|resource| resource.title == "Tool.exe"));
+    assert!(resources
+        .iter()
+        .any(|resource| resource.title == "Terminal.lnk"));
+    assert!(resources
+        .iter()
+        .any(|resource| resource.title == "Tool.exe"));
 
     ok(fs::remove_dir_all(root));
 }

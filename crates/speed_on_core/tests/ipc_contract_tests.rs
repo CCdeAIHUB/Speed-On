@@ -249,7 +249,8 @@ fn ipc_dispatcher_without_opener_rejects_open_resource() {
 #[test]
 fn ipc_dispatcher_with_opener_executes_open_resource() {
     // 场景：带 ResourceOpener 的 dispatcher 可以真正把 open_resource 分发给平台边界。
-    let mut dispatcher = JsonIpcDispatcherWithOpener::new(CoreApi::new(store_with_terminal()), MockOpener);
+    let mut dispatcher =
+        JsonIpcDispatcherWithOpener::new(CoreApi::new(store_with_terminal()), MockOpener);
     let response = dispatcher.dispatch(IpcRequest {
         protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
         request_id: "request-open".to_owned(),
@@ -290,7 +291,8 @@ fn ipc_dispatcher_without_scanner_rejects_refresh_applications() {
 #[test]
 fn ipc_dispatcher_with_scanner_executes_refresh_applications() {
     // 场景：带 InstalledApplicationScanner 的 dispatcher 可以扫描应用并写入 SQLite 索引。
-    let mut dispatcher = JsonIpcDispatcherWithScanner::new(CoreApi::new(store_with_terminal()), MockScanner);
+    let mut dispatcher =
+        JsonIpcDispatcherWithScanner::new(CoreApi::new(store_with_terminal()), MockScanner);
     let response = dispatcher.dispatch(IpcRequest {
         protocol_version: IPC_PROTOCOL_VERSION.to_owned(),
         request_id: "request-refresh".to_owned(),

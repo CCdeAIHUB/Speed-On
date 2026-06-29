@@ -56,7 +56,10 @@ pub struct SearchAlias {
 
 impl SearchAlias {
     pub fn new(kind: SearchAliasKind, value: impl Into<String>) -> Self {
-        Self { kind, value: value.into() }
+        Self {
+            kind,
+            value: value.into(),
+        }
     }
 }
 
@@ -114,7 +117,12 @@ pub struct SearchRequest {
 
 impl SearchRequest {
     pub fn new(query: impl Into<String>, limit: usize, now_millis: u64) -> Self {
-        Self { query: query.into(), limit, kinds: None, now_millis }
+        Self {
+            query: query.into(),
+            limit,
+            kinds: None,
+            now_millis,
+        }
     }
 
     pub fn with_kinds(mut self, kinds: Vec<ResourceKind>) -> Self {
@@ -174,13 +182,21 @@ where
     pub fn search(&mut self, request: SearchRequest) -> AppResult<Vec<SearchResult>> {
         let normalized_query = normalize_search_query(&request.query);
         if normalized_query.is_empty() {
-            return Err(AppError::invalid_argument("search query must not be empty", "search::SearchService"));
+            return Err(AppError::invalid_argument(
+                "search query must not be empty",
+                "search::SearchService",
+            ));
         }
         if request.limit == 0 {
-            return Err(AppError::invalid_argument("search limit must be greater than zero", "search::SearchService"));
+            return Err(AppError::invalid_argument(
+                "search limit must be greater than zero",
+                "search::SearchService",
+            ));
         }
 
-        let candidates = self.repository.load_search_candidates(request.kinds.as_deref())?;
+        let candidates = self
+            .repository
+            .load_search_candidates(request.kinds.as_deref())?;
         let results = rank_search_candidates(candidates, &request, &normalized_query);
         self.repository.record_user_search(&UserSearchLogEntry {
             id: build_log_id("search", request.now_millis, &normalized_query),
@@ -202,7 +218,10 @@ where
         let raw_query = raw_query.into();
         let normalized_query = normalize_search_query(&raw_query);
         if normalized_query.is_empty() {
-            return Err(AppError::invalid_argument("selection query must not be empty", "search::SearchService"));
+            return Err(AppError::invalid_argument(
+                "selection query must not be empty",
+                "search::SearchService",
+            ));
         }
         if selected_rank == 0 {
             return Err(AppError::invalid_argument(
@@ -210,17 +229,18 @@ where
                 "search::SearchService",
             ));
         }
-        self.repository.record_user_selection(&UserSelectionLogEntry {
-            id: build_log_id("selection", opened_at_millis, &normalized_query),
-            raw_query,
-            normalized_query,
-            selected_resource_id: selected.id.clone(),
-            selected_kind: selected.kind,
-            selected_title: selected.title.clone(),
-            selected_target: selected.target.clone(),
-            selected_rank,
-            opened_at_millis,
-        })
+        self.repository
+            .record_user_selection(&UserSelectionLogEntry {
+                id: build_log_id("selection", opened_at_millis, &normalized_query),
+                raw_query,
+                normalized_query,
+                selected_resource_id: selected.id.clone(),
+                selected_kind: selected.kind,
+                selected_title: selected.title.clone(),
+                selected_target: selected.target.clone(),
+                selected_rank,
+                opened_at_millis,
+            })
     }
 }
 
@@ -237,13 +257,23 @@ pub fn rank_search_candidates(
         .filter(|result| seen_ids.insert(result.resource.id.clone()))
         .collect::<Vec<_>>();
 
-    results.sort_by(|left, right| right.score.cmp(&left.score).then_with(|| left.resource.title.cmp(&right.resource.title)));
+    results.sort_by(|left, right| {
+        right
+            .score
+            .cmp(&left.score)
+            .then_with(|| left.resource.title.cmp(&right.resource.title))
+    });
     results.truncate(request.limit);
     results
 }
 
 pub fn normalize_search_query(value: &str) -> String {
-    value.trim().chars().flat_map(char::to_lowercase).filter(|c| c.is_alphanumeric()).collect()
+    value
+        .trim()
+        .chars()
+        .flat_map(char::to_lowercase)
+        .filter(|c| c.is_alphanumeric())
+        .collect()
 }
 
 fn kind_allowed(kind: ResourceKind, allowed: Option<&[ResourceKind]>) -> bool {
@@ -253,7 +283,11 @@ fn kind_allowed(kind: ResourceKind, allowed: Option<&[ResourceKind]>) -> bool {
     }
 }
 
-fn score_candidate(candidate: SearchCandidate, normalized_query: &str, now_millis: u64) -> Option<SearchResult> {
+fn score_candidate(
+    candidate: SearchCandidate,
+    normalized_query: &str,
+    now_millis: u64,
+) -> Option<SearchResult> {
     let history = best_history_match(&candidate, normalized_query, now_millis);
     let alias = best_alias_match(&candidate, normalized_query);
     match (history, alias) {
@@ -261,7 +295,11 @@ fn score_candidate(candidate: SearchCandidate, normalized_query: &str, now_milli
             resource: candidate.resource,
             score: history.score.saturating_add(alias.score / 10),
             match_kind: SearchMatchKind::UserHistory,
-            reason: format!("{}; also matched {}", history.reason, alias.match_kind.as_str()),
+            reason: format!(
+                "{}; also matched {}",
+                history.reason,
+                alias.match_kind.as_str()
+            ),
         }),
         (Some(history), Some(alias)) => Some(SearchResult {
             resource: candidate.resource,
@@ -269,10 +307,17 @@ fn score_candidate(candidate: SearchCandidate, normalized_query: &str, now_milli
             match_kind: alias.match_kind,
             reason: format!("{}; also matched user history", alias.reason),
         }),
-        (Some(history), None) => Some(SearchResult { resource: candidate.resource, score: history.score, match_kind: SearchMatchKind::UserHistory, reason: history.reason }),
+        (Some(history), None) => Some(SearchResult {
+            resource: candidate.resource,
+            score: history.score,
+            match_kind: SearchMatchKind::UserHistory,
+            reason: history.reason,
+        }),
         (None, Some(alias)) => Some(SearchResult {
             resource: candidate.resource,
-            score: alias.score.saturating_add(candidate.open_count.saturating_mul(5)),
+            score: alias
+                .score
+                .saturating_add(candidate.open_count.saturating_mul(5)),
             match_kind: alias.match_kind,
             reason: alias.reason,
         }),
@@ -287,7 +332,11 @@ struct CandidateScore {
     reason: String,
 }
 
-fn best_history_match(candidate: &SearchCandidate, normalized_query: &str, now_millis: u64) -> Option<CandidateScore> {
+fn best_history_match(
+    candidate: &SearchCandidate,
+    normalized_query: &str,
+    now_millis: u64,
+) -> Option<CandidateScore> {
     candidate
         .user_selection_signals
         .iter()
@@ -295,18 +344,27 @@ fn best_history_match(candidate: &SearchCandidate, normalized_query: &str, now_m
         .map(|signal| {
             let score = 2_000_u64
                 .saturating_add(signal.selection_count.saturating_mul(100))
-                .saturating_add(score_recency(now_millis.saturating_sub(signal.last_selected_at_millis)));
+                .saturating_add(score_recency(
+                    now_millis.saturating_sub(signal.last_selected_at_millis),
+                ));
             CandidateScore {
                 score,
                 match_kind: SearchMatchKind::UserHistory,
-                reason: format!("previously selected {} times for a similar query; score {score}", signal.selection_count),
+                reason: format!(
+                    "previously selected {} times for a similar query; score {score}",
+                    signal.selection_count
+                ),
             }
         })
         .max_by(|left, right| left.score.cmp(&right.score))
 }
 
 fn best_alias_match(candidate: &SearchCandidate, normalized_query: &str) -> Option<CandidateScore> {
-    candidate.aliases.iter().filter_map(|alias| score_alias(alias, normalized_query)).max_by(|left, right| left.score.cmp(&right.score))
+    candidate
+        .aliases
+        .iter()
+        .filter_map(|alias| score_alias(alias, normalized_query))
+        .max_by(|left, right| left.score.cmp(&right.score))
 }
 
 fn score_alias(alias: &SearchAlias, normalized_query: &str) -> Option<CandidateScore> {
@@ -314,8 +372,16 @@ fn score_alias(alias: &SearchAlias, normalized_query: &str) -> Option<CandidateS
     if normalized_alias.is_empty() || !normalized_alias.contains(normalized_query) {
         return None;
     }
-    let exact_bonus = if normalized_alias == normalized_query { 200 } else { 0 };
-    let prefix_bonus = if normalized_alias.starts_with(normalized_query) { 100 } else { 0 };
+    let exact_bonus = if normalized_alias == normalized_query {
+        200
+    } else {
+        0
+    };
+    let prefix_bonus = if normalized_alias.starts_with(normalized_query) {
+        100
+    } else {
+        0
+    };
     let base_score = match alias.kind {
         SearchAliasKind::Title => 700,
         SearchAliasKind::BrowserTitle => 650,
@@ -352,7 +418,17 @@ pub(crate) fn score_recency(age_millis: u64) -> u64 {
     const DAY: u64 = 24 * HOUR;
     const WEEK: u64 = 7 * DAY;
     const MONTH: u64 = 30 * DAY;
-    if age_millis <= HOUR { 80 } else if age_millis <= DAY { 60 } else if age_millis <= WEEK { 40 } else if age_millis <= MONTH { 20 } else { 5 }
+    if age_millis <= HOUR {
+        80
+    } else if age_millis <= DAY {
+        60
+    } else if age_millis <= WEEK {
+        40
+    } else if age_millis <= MONTH {
+        20
+    } else {
+        5
+    }
 }
 
 /// Global monotonic counter used to disambiguate log IDs generated within the

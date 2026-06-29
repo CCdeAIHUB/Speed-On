@@ -54,7 +54,8 @@ fn schema_contains_user_operation_logs_and_selection_stats() {
     assert!(CREATE_USER_SELECTION_LOGS_TABLE.contains("selected_resource_id TEXT NOT NULL"));
     assert!(CREATE_USER_SELECTION_LOGS_TABLE.contains("selected_target TEXT NOT NULL"));
     assert!(CREATE_QUERY_RESOURCE_SELECTION_STATS_TABLE.contains("selection_count"));
-    assert!(CREATE_QUERY_RESOURCE_SELECTION_STATS_TABLE.contains("PRIMARY KEY(normalized_query, resource_id)"));
+    assert!(CREATE_QUERY_RESOURCE_SELECTION_STATS_TABLE
+        .contains("PRIMARY KEY(normalized_query, resource_id)"));
 }
 
 #[test]

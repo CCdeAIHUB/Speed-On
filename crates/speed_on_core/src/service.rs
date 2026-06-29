@@ -29,12 +29,17 @@ where
                 "service::RecommendationService",
             ));
         }
-        let candidates = self.repository.load_recommendation_candidates(request.kinds.as_deref())?;
+        let candidates = self
+            .repository
+            .load_recommendation_candidates(request.kinds.as_deref())?;
         Ok(rank_candidates(candidates, &request))
     }
 }
 
-pub fn rank_candidates(candidates: Vec<CandidateResource>, request: &RecommendationRequest) -> Vec<Recommendation> {
+pub fn rank_candidates(
+    candidates: Vec<CandidateResource>,
+    request: &RecommendationRequest,
+) -> Vec<Recommendation> {
     let mut recommendations = candidates
         .into_iter()
         .filter(|candidate| match request.kinds.as_deref() {
@@ -49,10 +54,20 @@ pub fn rank_candidates(candidates: Vec<CandidateResource>, request: &Recommendat
                 .unwrap_or(0);
             let score = open_score.saturating_add(recent_score);
             let reason = match candidate.last_opened_at_millis {
-                Some(last_opened) => format!("opened {} times; last opened at {}; score {}", candidate.open_count, last_opened, score),
-                None => format!("opened {} times; no last-opened timestamp; score {}", candidate.open_count, score),
+                Some(last_opened) => format!(
+                    "opened {} times; last opened at {}; score {}",
+                    candidate.open_count, last_opened, score
+                ),
+                None => format!(
+                    "opened {} times; no last-opened timestamp; score {}",
+                    candidate.open_count, score
+                ),
             };
-            Recommendation { resource: candidate.resource, score, reason }
+            Recommendation {
+                resource: candidate.resource,
+                score,
+                reason,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -60,7 +75,12 @@ pub fn rank_candidates(candidates: Vec<CandidateResource>, request: &Recommendat
         right
             .score
             .cmp(&left.score)
-            .then_with(|| right.resource.last_seen_at_millis.cmp(&left.resource.last_seen_at_millis))
+            .then_with(|| {
+                right
+                    .resource
+                    .last_seen_at_millis
+                    .cmp(&left.resource.last_seen_at_millis)
+            })
             .then_with(|| left.resource.title.cmp(&right.resource.title))
     });
     recommendations.truncate(request.limit);

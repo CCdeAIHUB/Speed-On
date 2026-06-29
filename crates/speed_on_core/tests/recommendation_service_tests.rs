@@ -107,7 +107,12 @@ fn recommendations_filter_by_requested_resource_kinds() {
                 Some(now - 1_000),
             ),
             CandidateResource::new(
-                resource("url-a", ResourceKind::BrowserUrl, "Site A", "https://example.com"),
+                resource(
+                    "url-a",
+                    ResourceKind::BrowserUrl,
+                    "Site A",
+                    "https://example.com",
+                ),
                 100,
                 Some(now - 1_000),
             ),
@@ -134,7 +139,12 @@ fn recent_activity_breaks_ties_when_open_counts_are_equal() {
                 Some(now - 40 * 24 * 60 * 60 * 1_000),
             ),
             CandidateResource::new(
-                resource("recent-app", ResourceKind::Application, "Recent App", "/apps/recent"),
+                resource(
+                    "recent-app",
+                    ResourceKind::Application,
+                    "Recent App",
+                    "/apps/recent",
+                ),
                 3,
                 Some(now - 1_000),
             ),
