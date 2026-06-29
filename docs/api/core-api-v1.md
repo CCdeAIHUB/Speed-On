@@ -6,6 +6,8 @@ IPC protocol version: `speed-on-ipc-v1`
 
 This document defines the stable contract between native frontends and the Rust backend core. It is transport-agnostic: Windows, macOS, and Linux frontends may call it through IPC, local HTTP, FFI, or another adapter later, but the request and response payloads must keep this shape.
 
+For the full IPC protocol reference, including correct request examples and structured error examples for every command, see `docs/ipc/protocol-v1.md`.
+
 ## Unified response envelope
 
 Every frontend-facing API returns the same envelope.
@@ -305,7 +307,7 @@ Important behavior:
 
 ## Refresh applications
 
-Scan installed desktop applications through a platform adapter and write the discovered resources into SQLite.
+Scan installed desktop applications through a platform adapter, write the discovered resources into SQLite, and generate search aliases.
 
 ### Request
 
@@ -324,7 +326,8 @@ Fields:
 ```json
 {
   "api_version": "core-api-v1",
-  "scanned_count": 12
+  "scanned_count": 12,
+  "alias_count": 24
 }
 ```
 
@@ -334,6 +337,7 @@ Important behavior:
 - Scanning must go through an `InstalledApplicationScanner` platform adapter.
 - Dispatchers without a scanner must return `CORE_PLATFORM_UNSUPPORTED`.
 - Scanner results are upserted into `indexed_resources`, so subsequent search and recommendation calls can use them.
+- Search aliases are generated after the resource write. The first builder writes `title` and `target` aliases and provides a pinyin-provider extension point.
 - The first platform scanner supports macOS `.app` bundles, Linux `.desktop` entries, and Windows `.lnk` / `.exe` files from configured roots.
 
 ## Privacy boundary
