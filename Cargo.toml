@@ -2,6 +2,7 @@
 members = [
     "crates/speed_on_core",
     "crates/speed_on_ipc_stdio",
+    "crates/speed_on_platform",
 ]
 resolver = "2"
 
