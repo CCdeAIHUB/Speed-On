@@ -285,6 +285,7 @@ Fields:
 {
   "api_version": "core-api-v1",
   "opened": true,
+  "activity_recorded": true,
   "resource_id": "app-terminal",
   "kind": "application",
   "target": "/apps/terminal",
@@ -297,6 +298,8 @@ Important behavior:
 - Core API does not directly execute OS commands.
 - Opening must go through a `ResourceOpener` platform adapter.
 - Dispatchers without a platform opener must return `CORE_PLATFORM_UNSUPPORTED`.
+- After the opener succeeds, Core records an activity event and updates usage stats so future recommendations learn from the open action.
+- If activity recording fails after the opener succeeds, the API returns a structured error instead of silently hiding the persistence failure.
 - Platform adapters must validate targets and apply permission checks before invoking OS APIs.
 
 ## Privacy boundary
