@@ -1,9 +1,10 @@
 use serde_json::{json, Value};
 use speed_on_core::{
-    ApiRecommendationRequest, ApiRecommendationResult, ApiRecordSelectionRequest, ApiResource,
-    ApiResourceKind, ApiResponse, ApiSearchMatchKind, ApiSearchRequest, ApiSearchResult,
-    AppError, CoreApi, IndexedResource, Recommendation, ResourceKind, ResourceRepository,
-    SearchAlias, SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
+    ApiOpenResourceRequest, ApiRecommendationRequest, ApiRecommendationResult,
+    ApiRecordSelectionRequest, ApiResource, ApiResourceKind, ApiResponse, ApiSearchMatchKind,
+    ApiSearchRequest, ApiSearchResult, AppError, AppResult, CoreApi, IndexedResource,
+    OpenResourceOutcome, OpenResourceRequest, Recommendation, ResourceKind, ResourceOpener,
+    ResourceRepository, SearchAlias, SearchAliasKind, SearchMatchKind, SearchResult, SqliteStore,
 };
 
 fn to_json<T>(value: &T) -> Value
@@ -35,11 +36,51 @@ fn resource() -> IndexedResource {
         id: "app-terminal".to_owned(),
         kind: ResourceKind::Application,
         title: "Terminal".to_owned(),
-        target: "/System/Applications/Utilities/Terminal.app".to_owned(),
+        target: "/apps/terminal".to_owned(),
         icon_path: Some("terminal.png".to_owned()),
         source: "test".to_owned(),
         first_seen_at_millis: 1,
         last_seen_at_millis: 2,
+    }
+}
+
+struct RecordingOpener {
+    fail: bool,
+    opened_count: usize,
+}
+
+impl RecordingOpener {
+    fn new() -> Self {
+        Self {
+            fail: false,
+            opened_count: 0,
+        }
+    }
+
+    fn failing() -> Self {
+        Self {
+            fail: true,
+            opened_count: 0,
+        }
+    }
+}
+
+impl ResourceOpener for RecordingOpener {
+    fn open_resource(&mut self, request: &OpenResourceRequest) -> AppResult<OpenResourceOutcome> {
+        if self.fail {
+            return Err(AppError::platform_unsupported(
+                "mock opener is configured to fail",
+                "tests::RecordingOpener",
+            ));
+        }
+
+        self.opened_count += 1;
+        Ok(OpenResourceOutcome {
+            resource_id: request.resource.id.clone(),
+            kind: request.resource.kind,
+            target: request.resource.target.clone(),
+            opened_at_millis: request.requested_at_millis,
+        })
     }
 }
 
@@ -126,7 +167,7 @@ fn api_resource_converts_from_internal_resource_without_source_metadata() {
             "id": "app-terminal",
             "kind": "application",
             "title": "Terminal",
-            "target": "/System/Applications/Utilities/Terminal.app",
+            "target": "/apps/terminal",
             "icon_path": "terminal.png"
         })
     );
@@ -177,6 +218,20 @@ fn record_selection_request_contract_contains_query_resource_rank_and_time() {
 }
 
 #[test]
+fn open_resource_request_contract_contains_resource_and_request_time() {
+    // 场景：前端请求打开资源时，必须传入资源对象和请求时间，不能只传一个裸路径。
+    let request = ApiOpenResourceRequest {
+        resource: ApiResource::from(resource()),
+        requested_at_millis: 300,
+    };
+
+    let serialized = to_json(&request);
+    assert_eq!(serialized["resource"]["id"], json!("app-terminal"));
+    assert_eq!(serialized["resource"]["kind"], json!("application"));
+    assert_eq!(serialized["requested_at_millis"], json!(300));
+}
+
+#[test]
 fn core_api_facade_executes_search_recommend_and_record_selection() {
     // 场景：前端最终会调用 CoreApi facade，因此契约测试必须验证 facade 能组合 SQLite、搜索和推荐服务。
     let mut store = ok(SqliteStore::open_in_memory_migrated());
@@ -186,7 +241,7 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
         "app-terminal",
         &[
             SearchAlias::new(SearchAliasKind::Title, "Terminal"),
-            SearchAlias::new(SearchAliasKind::Target, "/System/Applications/Utilities/Terminal.app"),
+            SearchAlias::new(SearchAliasKind::Target, "/apps/terminal"),
         ],
         10,
     ));
@@ -218,4 +273,49 @@ fn core_api_facade_executes_search_recommend_and_record_selection() {
     });
     assert!(selection_response.ok);
     assert!(some(selection_response.data).recorded);
+}
+
+#[test]
+fn core_api_open_resource_uses_resource_opener_boundary() {
+    // 场景：Core API 可以打开资源，但实际平台动作必须通过 ResourceOpener 边界完成。
+    let store = ok(SqliteStore::open_in_memory_migrated());
+    let mut api = CoreApi::new(store);
+    let mut opener = RecordingOpener::new();
+
+    let response = api.open_resource_with(
+        &mut opener,
+        ApiOpenResourceRequest {
+            resource: ApiResource::from(resource()),
+            requested_at_millis: 300,
+        },
+    );
+
+    assert!(response.ok);
+    assert_eq!(opener.opened_count, 1);
+    let data = some(response.data);
+    assert!(data.opened);
+    assert_eq!(data.resource_id, "app-terminal");
+    assert_eq!(data.kind, ApiResourceKind::Application);
+    assert_eq!(data.opened_at_millis, 300);
+}
+
+#[test]
+fn core_api_open_resource_returns_structured_opener_error() {
+    // 场景：平台 opener 失败时，API 必须返回结构化错误，不能假装打开成功。
+    let store = ok(SqliteStore::open_in_memory_migrated());
+    let mut api = CoreApi::new(store);
+    let mut opener = RecordingOpener::failing();
+
+    let response = api.open_resource_with(
+        &mut opener,
+        ApiOpenResourceRequest {
+            resource: ApiResource::from(resource()),
+            requested_at_millis: 300,
+        },
+    );
+
+    assert!(!response.ok);
+    let error = some(response.error);
+    assert_eq!(error.error_code, "CORE_PLATFORM_UNSUPPORTED");
+    assert_eq!(error.module, "tests::RecordingOpener");
 }
