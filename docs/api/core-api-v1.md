@@ -63,7 +63,7 @@ Fields:
 
 - `protocol_version`: must be `speed-on-ipc-v1`.
 - `request_id`: frontend-generated request id. Must not be empty.
-- `command`: one of `search`, `recommend`, `record_selection`, `open_resource`.
+- `command`: one of `search`, `recommend`, `record_selection`, `open_resource`, `refresh_applications`.
 - `payload`: command-specific Core API request payload.
 
 ### IPC response
@@ -91,6 +91,7 @@ Important behavior:
 - Invalid payload returns a structured error.
 - IPC dispatcher must not panic on malformed payloads.
 - `open_resource` requires a platform `ResourceOpener` adapter. Dispatchers without an opener return `CORE_PLATFORM_UNSUPPORTED`.
+- `refresh_applications` requires a platform `InstalledApplicationScanner` adapter. Dispatchers without a scanner return `CORE_PLATFORM_UNSUPPORTED`.
 
 ## Common resource DTO
 
@@ -301,6 +302,39 @@ Important behavior:
 - After the opener succeeds, Core records an activity event and updates usage stats so future recommendations learn from the open action.
 - If activity recording fails after the opener succeeds, the API returns a structured error instead of silently hiding the persistence failure.
 - Platform adapters must validate targets and apply permission checks before invoking OS APIs.
+
+## Refresh applications
+
+Scan installed desktop applications through a platform adapter and write the discovered resources into SQLite.
+
+### Request
+
+```json
+{
+  "requested_at_millis": 400
+}
+```
+
+Fields:
+
+- `requested_at_millis`: timestamp in milliseconds when the frontend requested refreshing the application index.
+
+### Success response data
+
+```json
+{
+  "api_version": "core-api-v1",
+  "scanned_count": 12
+}
+```
+
+Important behavior:
+
+- Core API does not scan OS application locations directly.
+- Scanning must go through an `InstalledApplicationScanner` platform adapter.
+- Dispatchers without a scanner must return `CORE_PLATFORM_UNSUPPORTED`.
+- Scanner results are upserted into `indexed_resources`, so subsequent search and recommendation calls can use them.
+- The first platform scanner supports macOS `.app` bundles, Linux `.desktop` entries, and Windows `.lnk` / `.exe` files from configured roots.
 
 ## Privacy boundary
 
